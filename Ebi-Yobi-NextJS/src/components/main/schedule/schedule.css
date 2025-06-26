@@ -1,0 +1,28 @@
+.schedule-container {
+  padding: 1rem;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.view-toggle button {
+  padding: 6px 18px;
+  border: 1px solid #4fc3f7;
+  background: #fff;
+  color: #1976d2;
+  border-radius: 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.view-toggle button.active,
+.view-toggle button:focus {
+  background: #4fc3f7;
+  color: #fff;
+  border-color: #0288d1;
+  outline: none;
+}
