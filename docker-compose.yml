@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Next.jsアプリケーションサービス
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    # .envファイルから環境変数を読み込む
+    env_file:
+      - .env
+    # コンテナ内のDATABASE_URLを上書きし、dbサービスに接続する
+    environment:
+      DATABASE_URL: "postgresql://myuser:mypassword@db:5432/mydb?schema=public"
+    volumes:
+      # 開発用にソースコードをマウントする
+      # これによりコード変更が即時反映される
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    # dbサービスが起動してからappサービスを起動する
+    depends_on:
+      - db
+
+  # PostgreSQLサービス
+  db:
+    image: postgres:15-alpine
+    restart: always
+    # .envファイル内の環境変数を参照して設定
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      # ホストPCの5432番ポートをコンテナの5432番ポートに接続
+      - "5432:5432"
+    volumes:
+      # DBのデータを永続化するためのボリューム
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  # 名前付きボリュームの定義
+  postgres_data:

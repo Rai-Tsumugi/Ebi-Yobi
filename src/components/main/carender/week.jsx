@@ -4,40 +4,18 @@ import React, { useRef, useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import jaLocale from '@fullcalendar/core/locales/ja';
-import lectures from '../../mocks/lectures.jsx';
 import timeSchedule from '../../mocks/timeSchedule.jsx';
 
 // lecturesとtimeScheduleからFullCalendar用イベントを生成
 const dayMap = {
-  '月曜': '1',
-  '火曜': '2',
-  '水曜': '3',
-  '木曜': '4',
-  '金曜': '5',
-  '土曜': '6',
-  '日曜': '0',
+  MONDAY: '1',
+  TUESDAY: '2',
+  WEDNESDAY: '3',
+  THURSDAY: '4',
+  FRIDAY: '5',
+  SATURDAY: '6',
+  SUNDAY: '0',
 };
-
-function getEventTime(period) {
-  const time = timeSchedule.find(t => t.period === period);
-  return time ? { start: time.start, end: time.end } : { start: '00:00', end: '00:00' };
-}
-
-const events = lectures.map(lec => {
-  const dow = dayMap[lec.schedule.day];
-  const { start, end } = getEventTime(lec.schedule.period);
-  return {
-    title: `${lec.name} (${lec.teacher})`,
-    daysOfWeek: [dow], // 0:日曜, 1:月曜...
-    startTime: start,
-    endTime: end,
-    extendedProps: {
-      room: lec.room,
-      credits: lec.credits,
-      description: lec.description,
-    },
-  };
-});
 
 const getViewName = () => (typeof window !== 'undefined' && window.innerWidth <= 900 ? 'timeGridThreeDay' : 'timeGridWeek');
 
@@ -45,6 +23,34 @@ const Week = ({ current, setCurrent }) => {
   const calendarRef = useRef(null);
   const [viewName, setViewName] = useState(getViewName());
   const [pendingDate, setPendingDate] = useState(null);
+  const [lectures, setLectures] = useState([]);
+  const [events, setEvents] = useState([]);
+
+  // 講義データをAPIから取得
+  useEffect(() => {
+    fetch('/api/lectures')
+      .then(res => res.json())
+      .then(data => setLectures(data));
+  }, []);
+
+  // lecturesからeventsを生成
+  useEffect(() => {
+    const evs = lectures.map(lec => {
+      const dow = dayMap[lec.day];
+      return {
+        title: `${lec.name} (${lec.teacher})`,
+        daysOfWeek: [dow],
+        startTime: lec.timeSchedule.startTime,
+        endTime: lec.timeSchedule.endTime,
+        extendedProps: {
+          room: lec.room,
+          credits: lec.credits,
+          description: lec.description,
+        },
+      };
+    });
+    setEvents(evs);
+  }, [lectures]);
 
   useEffect(() => {
     const handleResize = () => {

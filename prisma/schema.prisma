@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ここからモデル定義 ---
+// 曜日を定義するEnum（列挙型）
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+  INTENSIVE // 集中講義など
+}
+
+// 時限と時間を管理するモデル
+model TimeSchedule {
+  // periodを主キーとすることで、1, 2, 3... の値でユニークになります
+  period    Int       @id
+  startTime String    // "HH:mm"形式で保存することを想定
+  endTime   String    // "HH:mm"形式で保存することを想定
+
+  // この時限に割り当てられている講義の一覧 (リレーション)
+  lectures  Lecture[]
+}
+
+// 講義情報を管理するモデル
+model Lecture {
+  id        Int      @id @default(autoincrement())
+  name      String
+  teacher   String
+  room      String
+  credits   Int
+  
+  // --- 曜日と時限 ---
+  day       DayOfWeek
+  period    Int
+
+  // --- リレーション定義 ---
+  // Lectureモデルの "period" フィールドを使い、
+  // TimeScheduleモデルの "period" フィールドを参照します
+  timeSchedule TimeSchedule @relation(fields: [period], references: [period])
+
+  // --- 制約 ---
+  // 同じ曜日、同じ時限に、同じ教室で複数の講義が開かれないようにするユニーク制約
+  @@unique([day, period, room])
+}

@@ -12,6 +12,7 @@
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
+    "@prisma/client": "^6.10.1",
     "next": "15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -21,6 +22,8 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "tailwindcss": "^4"
+    "prisma": "^6.10.1",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2"
   }
 }
