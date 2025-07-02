@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import jaLocale from '@fullcalendar/core/locales/ja';
-import timeSchedule from '../../mocks/timeSchedule.jsx';
+
 
 // lecturesとtimeScheduleからFullCalendar用イベントを生成
 const dayMap = {

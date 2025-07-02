@@ -3,9 +3,9 @@ version: '3.8'
 services:
   # Next.jsアプリケーションサービス
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: node:18-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
     ports:
       - "3000:3000"
     # .envファイルから環境変数を読み込む
