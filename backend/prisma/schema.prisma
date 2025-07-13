@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ユーザー
+model User {
+  id                      String                           @id @default(cuid())
+  university_email        String                           @unique
+  name                    String?                          // 初回ログイン時はNULL
+  role                    Role                             @default(USER)
+  createdAt               DateTime                         @default(now())
+  updatedAt               DateTime                         @updatedAt
+
+  // Relations
+  createdSupplementaryLectures SupplementaryLecture[]
+  personalEvents               PersonalEvent[]
+  attendances                  SupplementaryLectureAttendance[]
+  requests                     SupplementaryLectureRequest[]
+}
+
+// 大学公式の講義
+model OfficialLecture {
+  id          Int      @id @default(autoincrement())
+  name        String
+  professor   String
+  dayOfWeek   Int // 曜日 (例: 1=月, 2=火)
+  period      Int // 時限 (例: 1=1限)
+  termId      Int
+
+  // Relations
+  term                  Term                           @relation(fields: [termId], references: [id], onDelete: Cascade)
+  supplementaryLectures SupplementaryLecture[]
+  requests              SupplementaryLectureRequest[]
+  exceptions            LectureException[]
+}
+
+// 私的補講
+model SupplementaryLecture {
+  id                Int      @id @default(autoincrement())
+  location          String
+  startTime         DateTime
+  endTime           DateTime
+  description       String?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  creator           User                           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId         String
+  officialLecture   OfficialLecture                @relation(fields: [officialLectureId], references: [id], onDelete: Restrict) // 関連する公式講義が消えたらエラー
+  officialLectureId Int
+  attendees         SupplementaryLectureAttendance[]
+}
+
+// 個人予定
+model PersonalEvent {
+  id          Int      @id @default(autoincrement())
+  title       String
+  startTime   DateTime
+  endTime     DateTime
+  description String?
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+}
+
+// 補講への出席登録（中間テーブル）
+model SupplementaryLectureAttendance {
+  // Relations
+  user                   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                 String
+  supplementaryLecture   SupplementaryLecture @relation(fields: [supplementaryLectureId], references: [id], onDelete: Cascade)
+  supplementaryLectureId Int
+
+  @@id([userId, supplementaryLectureId])
+}
+
+// 補講の開催希望（中間テーブル）
+model SupplementaryLectureRequest {
+  // Relations
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  officialLecture   OfficialLecture @relation(fields: [officialLectureId], references: [id], onDelete: Restrict) // 関連する公式講義が消えたらエラー
+  officialLectureId Int
+
+  @@id([userId, officialLectureId])
+}
+
+// 学期マスタ
+model Term {
+  id        Int      @id @default(autoincrement())
+  name      String   // 例: "2025年度前期"
+  startDate DateTime
+  endDate   DateTime
+
+  // Relations
+  lectures  OfficialLecture[]
+}
+
+// 時限マスタ
+model PeriodSetting {
+  id        Int      @id
+  period    Int      @unique
+  startTime String   // "HH:mm"
+  endTime   String   // "HH:mm"
+}
+
+// 講義の例外日（休講・補講日など）
+model LectureException {
+  id                Int      @id @default(autoincrement())
+  originalDate      DateTime // 本来の講義日
+  type              String   // "CANCELLED" (休講), "MOVED" (日程変更)
+  newDate           DateTime? // 変更後の日付 (MOVEDの場合)
+  description       String?
+
+  // Relations
+  officialLecture   OfficialLecture @relation(fields: [officialLectureId], references: [id], onDelete: Cascade)
+  officialLectureId Int
+}
