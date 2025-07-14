@@ -327,3 +327,124 @@ docker-compose up -d
 ブラウザで `http://localhost:5173` (Viteのデフォルト) にアクセスし、Reactアプリケーションが表示されることを確認します。
 また、バックエンドサーバーが起動していることを確認するために、`http://localhost:3001` にアクセスして "Hello World!" が表示されることを確認します.
 
+# Issue #3: CI/CD パイプラインの構築
+
+このセクションでは、GitHubリポジトリへのプッシュをトリガーとして、VercelおよびGoogle Cloudへ自動的にデプロイされるCI/CDパイプラインを構築する手順を詳述します。
+
+## 1.3.1. デプロイ戦略の確認
+
+`issuse.md` に記載されているデプロイ戦略を再確認します。
+
+-   **ステージング環境**: `develop`ブランチにマージされると、ステージング環境へ自動でデプロイされる。機能の事前確認やテストに使用する。
+-   **本番環境**: `main`ブランチにマージされると、本番環境へ自動でデプロイされる。ユーザーが実際に利用する環境となる。
+
+## 1.3.2. フロントエンド (Vercel) の設定
+
+Vercel のダッシュボード上で GitHub リポジトリを連携し、以下の設定を行います。
+
+1.  **Vercel プロジェクトの作成と GitHub 連携:**
+    -   Vercel のウェブサイト (`vercel.com`) にアクセスし、ログインします。
+    -   `New Project` をクリックし、GitHub リポジトリをインポートします。
+    -   プロジェクトのルートディレクトリがモノレポのルート (`ebi-yobi/`) であることを確認し、`frontend` ディレクトリを Vercel プロジェクトのルートとして設定します。
+
+2.  **プロジェクト設定:**
+    -   **Framework Preset**: `Vite` を選択します。
+    -   **Root Directory**: `frontend` を指定します。
+
+3.  **環境変数 (Environment Variables) の設定:**
+    -   **Production (`main` ブランチにデプロイされる環境):**
+        -   `VITE_API_BASE_URL`: 本番バックエンドのURL (例: `https://ebiyobi-backend-prod.a.run.app`) を設定します。このURLは、バックエンドの Cloud Run サービスをデプロイした後に取得できます。
+    -   **Preview (`develop` ブランチなど、プルリクエスト時にデプロイされる環境):**
+        -   `VITE_API_BASE_URL`: ステージングバックエンドのURL (例: `https://ebiyobi-backend-staging.a.run.app`) を設定します。このURLも、バックエンドの Cloud Run サービスをデプロイした後に取得できます。
+
+## 1.3.3. バックエンド (Google Cloud Run) の設定
+
+Google Cloud Build を利用して、GitHub リポジトリの変更を検知し Cloud Run へデプロイします。
+
+1.  **Google Cloud プロジェクトのセットアップ:**
+    -   Google Cloud Console (`https://console.cloud.google.com/`) にアクセスし、新しいプロジェクトを作成するか、既存のプロジェクトを選択します。
+    -   **操作によってできるようになること:** GCP 上でリソースを管理するための論理的なコンテナが準備されます。
+    -   以下の API を有効にします。
+        -   Cloud Run API
+        -   Cloud SQL Admin API
+        -   Cloud Build API
+        -   Identity-Aware Proxy (IAP) API
+    -   **操作によってできるようになること:** これらのサービスを利用するための基盤が整い、Cloud Run でアプリケーションをデプロイしたり、Cloud SQL でデータベースを管理したり、Cloud Build で CI/CD を自動化したり、IAP で認証を強化したりする準備ができます。
+
+2.  **`backend` ディレクトリに `Dockerfile` を作成:**
+    `backend` ディレクトリのルートに `Dockerfile` という名前のファイルを作成し、以下の内容を記述します。
+    ```dockerfile
+    # Use the official Node.js 20 image as the base image
+    FROM node:20-slim
+
+    # Set the working directory in the container
+    WORKDIR /app
+
+    # Copy package.json and package-lock.json to the working directory
+    COPY package*.json ./
+
+    # Install dependencies
+    RUN npm install
+
+    # Copy the rest of the application code
+    COPY . .
+
+    # Build the TypeScript application
+    RUN npm run build
+
+    # Expose the port the app runs on
+    EXPOSE 3001
+
+    # Run the application
+    CMD ["npm", "start"]
+    ```
+    *思想:* この `Dockerfile` は、Node.js アプリケーションをコンテナ化するための標準的な手順を定義しています。依存関係のインストール、TypeScript のビルド、そしてアプリケーションの起動コマンドを含みます。
+    *   **操作によってできるようになること:** バックエンドアプリケーションを Docker コンテナとしてパッケージ化できるようになります。これにより、環境に依存せず、どこでも一貫した方法でアプリケーションを実行・デプロイすることが可能になります。
+
+3.  **Cloud SQL for PostgreSQL インスタンスの作成:**
+    -   Cloud Console で `Cloud SQL` に移動し、`インスタンスを作成` をクリックします。
+    -   `PostgreSQL` を選択し、インスタンス名 (例: `ebiyobi-prod-db`, `ebiyobi-staging-db`)、パスワード、リージョンなどを設定します。
+    -   **本番用とステージング用の2つのインスタンス**を作成します。
+    -   **接続設定:** `プライベート IP` を有効化し、`パブリック IP` は無効化します。
+    -   **操作によってできるようになること:** アプリケーションが利用するデータベースがクラウド上に構築されます。プライベート IP の設定により、Cloud Run からの安全な内部接続が可能になり、外部からの直接アクセスを防ぐことでセキュリティが向上します。
+
+4.  **Cloud Run サービスの作成:**
+    -   Cloud Console で `Cloud Run` に移動し、`サービスを作成` をクリックします。
+    -   **本番用とステージング用の2つのサービス**を作成します。
+    -   **コンテナイメージの URL:** ここではまだイメージがないため、**後で Cloud Build からデプロイされるイメージを指定します**。初期デプロイ時には、適当なダミーイメージ（例: `gcr.io/cloudrun/hello`）を指定しておき、後で Cloud Build トリガーで自動更新されるように設定します。
+    -   **環境変数:**
+        -   `DATABASE_URL`: 対応する Cloud SQL インスタンスの接続文字列 (例: `postgresql://user:password@/database?host=/cloudsql/project-id:region:instance-name`) を設定します。
+        -   `CORS_ORIGIN`: 対応する Vercel フロントエンドの URL (Production/Preview) を設定します。例: `https://ebiyobi-frontend.vercel.app` (本番用), `https://ebiyobi-frontend-git-develop-your-username.vercel.app` (ステージング用)
+    -   **ネットワーク:** Cloud SQL に接続するために、`VPC コネクタ` を設定します。
+    -   **操作によってできるようになること:** バックエンドアプリケーションをサーバーレス環境で実行するためのエンドポイントが準備されます。環境変数により、データベース接続や CORS 設定が動的に行われ、VPC コネクタにより Cloud SQL とのセキュアな通信が可能になります。
+
+5.  **Cloud Build トリガーの設定:**
+    -   Cloud Console で `Cloud Build` に移動し、`トリガー` をクリックします。
+    -   **`main` ブランチ用と `develop` ブランチ用の2つのトリガー**を作成します。
+    -   **イベント:** `ブランチにプッシュする` を選択します。
+    -   **ソース:** GitHub リポジトリと対象ブランチ (`main` または `develop`) を選択します。
+    -   **ビルド構成:** `Dockerfile` を選択し、`backend` ディレクトリ内の `Dockerfile` を指定します。
+    -   **ビルド済みイメージの保存先:** 対応する Cloud Run サービスにデプロイされるイメージのパスを指定します。
+    -   **操作によってできるようになること:** GitHub へのコードプッシュをトリガーとして、バックエンドアプリケーションのコンテナイメージが自動的にビルドされ、対応する Cloud Run サービスにデプロイされるようになります。これにより、CI/CD パイプラインの自動化が実現します。
+
+
+## 1.3.4. 認証 (Google IAP) の設定
+
+Cloud Run で稼働するバックエンド API を保護するため、Identity-Aware Proxy (IAP) を設定します。
+
+1.  **IAP の有効化:**
+    -   Cloud Console で `Identity-Aware Proxy` に移動します。
+    -   対象の Cloud Run サービスを選択し、IAP を有効にします。
+
+2.  **OAuth 同意画面の設定:**
+    -   IAP を有効にする前に、OAuth 同意画面が正しく設定されている必要があります。`OAuth 同意画面` に移動し、アプリケーション名、サポートメール、承認済みドメインなどを設定します。
+
+3.  **アクセス許可 (IAM) の設定:**
+    -   Cloud Console で `IAM と管理` > `IAM` に移動します。
+    -   アクセスを許可したい Google アカウントまたは Google グループに対し、「`IAP-secured Web App User`」ロールを付与します。これにより、指定されたユーザーのみが IAP を通過してバックエンド API にアクセスできるようになります。
+
+## 1.3.5. 動作確認
+
+-   `develop` ブランチにプッシュし、ステージング環境のフロントエンドとバックエンドがデプロイされ、正しく連携していることを確認します。
+-   `main` ブランチにプルリクエストをマージし、本番環境のフロントエンドとバックエンドがデプロイされ、正しく連携していることを確認します。
+-   IAP が正しく機能し、認証されたユーザーのみがバックエンド API にアクセスできることを確認します。
