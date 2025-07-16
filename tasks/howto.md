@@ -135,7 +135,7 @@ git push origin develop
 
 `issuse.md`で定義されているラベルをGitHubに設定し、Issueの分類を容易にします。
 
-1.  GitHubリポジトリの `Issues` タブ > `Labels` メニューを選択します。
+1.  GitHubリポジリの `Issues` タブ > `Labels` メニューを選択します。
 2.  `New label` ボタンをクリックし、以下のラベルを一つずつ作成します。
 
 ### 種別 (Type)
@@ -319,7 +319,7 @@ docker-compose up -d
 -   **ターミナル③ (`frontend` ディレクトリ):** フロントエンドの開発サーバーを起動します。
     ```bash
     cd frontend
-    npm run dev
+    npm install
     ```
 
 **3. 動作確認**
@@ -448,3 +448,1015 @@ Cloud Run で稼働するバックエンド API を保護するため、Identity
 -   `develop` ブランチにプッシュし、ステージング環境のフロントエンドとバックエンドがデプロイされ、正しく連携していることを確認します。
 -   `main` ブランチにプルリクエストをマージし、本番環境のフロントエンドとバックエンドがデプロイされ、正しく連携していることを確認します。
 -   IAP が正しく機能し、認証されたユーザーのみがバックエンド API にアクセスできることを確認します。
+
+# Issue #5: 認証機構の実装
+
+このセクションでは、`issuse.md`の「2.1. 認証機構の実装」に基づき、アプリケーションの認証機能を具体的に実装する手順を詳述します。
+
+## 2.1.1. バックエンド側の実装
+
+バックエンドは、フロントエンドからのリクエストを受け取り、Google IAPが付与したユーザー情報を基に、データベースのユーザー情報を管理する責務を負います。
+
+### Step 1: 依存関係の確認と設定
+
+- **`cors`のインストール:** フロントエンド（Vercel）からバックエンド（Cloud Run）へのリクエストはクロスオリジンとなるため、`cors`ミドルウェアが必要です。
+  ```bash
+  # backend ディレクトリで実行
+  npm install cors
+  # 型定義もインストール
+  npm install -D @types/cors
+  ```
+- **Prisma Clientの生成:** データベースと対話するためのクライアントを生成します。
+  ```bash
+  # backend ディレクトリで実行
+  npx prisma generate
+  ```
+  *思想:* `prisma generate`は`schema.prisma`の内容を基に、型安全なデータベースアクセスクライアントを`node_modules/@prisma/client`内に生成します。これにより、コード内で`prisma.user.findUnique`のようなメソッドをTypeScriptの型補完と共に利用できるようになります。
+
+### Step 2: Expressサーバーの基本設定 (`backend/src/index.ts`)
+
+`index.ts`を修正し、`cors`ミドルウェアの適用、JSONリクエストボディのパース設定、そしてPrisma Clientのインスタンス化を行います。
+
+```typescript
+// backend/src/index.ts
+
+import express from 'express';
+import cors from 'cors';
+import { PrismaClient } from '@prisma/client';
+
+const app = express();
+const prisma = new PrismaClient();
+const port = process.env.PORT || 3001;
+
+// --- ミドルウェアの設定 ---
+
+// CORS設定
+// VercelのプレビューデプロイURLは動的に変わるため、正規表現で許可する
+const allowedOrigins = [
+  'http://localhost:5173', // ローカル開発環境
+  /https:\/\/ebiyobi-frontend-.*\.vercel\.app\/, // Vercelのプレビュー環境
+  // TODO: 本番環境のドメインを追加
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => (typeof o === 'string' ? o === origin : o.test(origin)))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+}));
+
+// JSONリクエストボディをパースする
+app.use(express.json());
+
+
+// --- ルーティングの設定 ---
+// (後続のステップで作成するルーターをここにインポートして使用する)
+
+
+// --- サーバー起動 ---
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+```
+*思想:* `cors`ミドルウェアを早期に適用することで、後続のルートハンドラに到達する前にオリジンチェックを完了させます。許可するオリジンを明示的にリスト化することで、意図しないドメインからのAPIアクセスを防ぎます。
+
+### Step 3: 認証ミドルウェアの作成 (`backend/src/middleware/auth.ts`)
+
+APIリクエストからIAPの認証情報を抽出し、対応するユーザー情報をDBから取得・作成して後続処理に渡すミドルウェアを作成します。
+
+1.  `backend/src/`内に`middleware`ディレクトリを作成します。
+2.  `backend/src/middleware/`内に`auth.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/middleware/auth.ts
+
+import { Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// ExpressのRequestオブジェクトにuserプロパティを追加するための型拡張
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        university_email: string;
+        name: string | null;
+        role: 'USER' | 'ADMIN';
+      }
+    }
+  }
+}
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // IAPから付与されるヘッダー情報を取得
+  const emailHeader = req.headers['x-goog-authenticated-user-email'];
+  
+  // ヘッダーが存在しない場合はエラー
+  if (!emailHeader) {
+    return res.status(401).send('Unauthorized: Missing IAP header');
+  }
+  
+  // ヘッダーからメールアドレスを抽出 (例: "accounts.google.com:user@example.com" -> "user@example.com")
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // --- ここから追加するロジック --- 
+  // 許可するドメインのリストを定義（環境変数から読み込むのが理想的）
+  const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu']; // 例: 実際のドメインに置き換える
+
+  const domain = email.split('@')[1]; // メールアドレスからドメインを抽出
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).send('Forbidden: Access denied for this organization.');
+  }
+  // --- ここまで追加するロジック --- 
+
+  try {
+    // メールアドレスを基にユーザーを検索
+    let user = await prisma.user.findUnique({
+      where: { university_email: email },
+    });
+
+    // ユーザーが存在しない場合は新規作成
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          university_email: email,
+          // nameは初回ログイン時はNULL
+        },
+      });
+    }
+
+    // 後続の処理で使えるように、リクエストオブジェクトにユーザー情報を格納
+    req.user = user;
+    next(); // 次のミドルウェアまたはルートハンドラへ処理を移す
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+```
+*思想:* このミドルウェアは、認証ロジックをAPIエンドポイントの実装から分離する責務を持ちます。`req.user`にユーザー情報を格納することで、後続のどのルートハンドラでも認証済みユーザーの情報にアクセスできるようになり、コードの再利用性が高まります。`declare global`を用いた型拡張は、TypeScript環境で`req.user`に安全にアクセスするために不可欠です。
+
+#### 補足: 組織ドメインによるアクセス制限の追加
+
+IAPからの認証情報に加えて、特定の組織のメールアドレスドメインのみを許可するロジックをミドルウェアに追加することができます。これにより、より厳格なアクセス制御を実現します。
+
+```typescript
+// backend/src/middleware/auth.ts (iapAuthMiddleware関数内)
+
+// ... (既存のIAPヘッダー取得とメールアドレス抽出ロジック)
+
+const email = (emailHeader as string).split(':').pop();
+if (!email) {
+  return res.status(400).send('Bad Request: Invalid IAP header format');
+}
+
+// --- ここから追加するロジック --- 
+// 許可するドメインのリストを定義（環境変数から読み込むのが理想的）
+const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu']; // 例: 実際のドメインに置き換える
+
+const domain = email.split('@')[1]; // メールアドレスからドメインを抽出
+if (!ALLOWED_DOMAINS.includes(domain)) {
+  console.warn(`Unauthorized access attempt from domain: ${domain}`);
+  return res.status(403).send('Forbidden: Access denied for this organization.');
+}
+// --- ここまで追加するロジック --- 
+
+try {
+  // ... (既存のユーザー検索・作成ロジック)
+} catch (error) {
+  // ...
+}
+```
+
+このロジックは、ユーザー情報をデータベースに登録する前に実行されるため、不正なアクセスを早期にブロックし、セキュリティを強化します。
+
+### Step 4: ユーザールーターの作成 (`backend/src/routes/user.ts`)
+
+ユーザー情報に関連するAPIエンドポイントをまとめたルーターを作成します。
+
+1.  `backend/src/`内に`routes`ディレクトリを作成します。
+2.  `backend/src/routes/`内に`user.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/user.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/users/me - ログインユーザーの情報を取得
+router.get('/me', (req, res) => {
+  // 認証ミドルウェアによってreq.userがセットされているはず
+  if (req.user) {
+    res.json(req.user);
+  } else {
+    // この状況は通常、ミドルウェアで弾かれるため発生しないはず
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+// PUT /api/users/me - ログインユーザーの情報（名前）を更新
+router.put('/me', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { name } = req.body;
+  if (typeof name !== 'string' || name.trim() === '') {
+    return res.status(400).json({ error: 'Name is required and must be a non-empty string.' });
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { name: name.trim() },
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Failed to update user:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*思想:* `express.Router`を使うことで、関連するAPIエンドポイントをモジュールとしてカプセル化します。これにより、`index.ts`が肥大化するのを防ぎ、コードの見通しを良くします。
+
+### Step 5: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した認証ミドルウェアとユーザールーターを`index.ts`に組み込みます。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを以下のように修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+// /api/users で始まるリクエストに対して、まず認証ミドルウェアを適用し、
+// その後userRouterで定義されたエンドポイントに処理を渡す
+app.use('/api/users', iapAuthMiddleware, userRouter);
+
+// ... (サーバー起動)
+```
+*思想:* `app.use('/api/users', ...)`のようにパスを指定してミドルウェアとルーターを適用することで、特定のパス以下にのみ認証を必須にすることができます。これにより、将来的に認証が不要なAPI（例: 公開情報取得API）を追加する際に柔軟な対応が可能になります。
+
+## 2.1.2. フロントエンド側の実装
+
+フロントエンドは、バックエンドAPIと通信して認証状態を管理し、ユーザー名が未登録の場合には入力を促すUIを提供する責務を負います。
+
+### Step 1: 依存関係のインストール
+
+データ取得と状態管理を効率的に行うため、`SWR`をインストールします。
+
+```bash
+# frontend ディレクトリで実行
+npm install swr
+```
+
+### Step 2: APIクライアントの準備 (`frontend/src/lib/api.ts`)
+
+APIリクエストを行うためのヘルパー関数を作成します。
+
+1.  `frontend/src/`内に`lib`ディレクトリを作成します。
+2.  `frontend/src/lib/`内に`api.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/lib/api.ts
+
+import type { User } from '../types/user';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Google IAPを介したリクエストでは、通常ブラウザが自動で認証情報をハンドリングするため、
+// fetchのオプションに特別なヘッダーを追加する必要はありません。
+// ただし、withCredentialsをtrueに設定することが推奨される場合があります。
+export const fetcher = async <T>(url: string): Promise<T> => {
+  const res = await fetch(`${API_BASE_URL}${url}`, {
+    credentials: 'omit', // IAPでは通常不要だが、将来的な認証方式の変更に備える
+  });
+
+  if (!res.ok) {
+    const error = new Error('An error occurred while fetching the data.');
+    // エラーレスポンスから詳細な情報を取得してエラーオブジェクトに添付
+    try {
+      error.info = await res.json();
+    } catch (e) {
+      // JSONパースに失敗した場合
+      error.info = { message: await res.text() };
+    }
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json();
+};
+
+// ユーザー情報を更新するAPI関数
+export const updateUser = async (name: string): Promise<User> => {
+  const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!res.ok) {
+    // エラーハンドリング
+    throw new Error('Failed to update user');
+  }
+
+  return res.json();
+};
+```
+*思想:* API通信ロジックを`fetcher`関数に集約することで、コードの重複を避け、エラーハンドリングや認証情報の付与を一元管理できます。`SWR`はこの`fetcher`関数と組み合わせて使用します。
+
+#### 補足: `import type`とモジュール解決について
+
+ViteのようなモダンなビルドツールとTypeScriptの組み合わせでは、型定義ファイル（例: `src/types/user.ts`）から`interface`のような型情報のみをインポートする際に、`import { User } from '../types/user';` のように記述すると、ビルド時に`User`という名前の**値**がエクスポートされていないためにエラーとなることがあります。これは、TypeScriptの`"verbatimModuleSyntax": true`（または`"isolatedModules": true`）設定が有効な場合に特に顕著です。
+
+この問題を回避し、型のみをインポートすることを明示するためには、`import type`構文を使用することが推奨されます。
+
+```typescript
+// 修正前 (エラーの原因となる可能性あり)
+import { User } from '../types/user';
+
+// 修正後 (型のみをインポートすることを明示)
+import type { User } from '../types/user';
+```
+
+この修正は、`frontend/src/lib/api.ts`と`frontend/src/hooks/useUser.ts`の両方で必要となります。
+
+#### 補足: `fetcher`関数のエクスポート
+
+`frontend/src/lib/api.ts`で定義する`fetcher`関数は、`frontend/src/hooks/useUser.ts`からインポートして使用するため、`export`キーワードを付与する必要があります。
+
+```typescript
+// 修正前 (エクスポートが不足)
+const fetcher = async <T>(url: string): Promise<T> => { ... };
+
+// 修正後 (エクスポートを追加)
+export const fetcher = async <T>(url: string): Promise<T> => { ... };
+```
+
+
+### Step 3: 型定義の作成 (`frontend/src/types/user.ts`)
+
+バックエンドと共有するユーザーデータの型を定義します。
+
+1.  `frontend/src/`内に`types`ディレクトリを作成します。
+2.  `frontend/src/types/`内に`user.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/types/user.ts
+
+export interface User {
+  id: string;
+  university_email: string;
+  name: string | null;
+  role: 'USER' | 'ADMIN';
+  createdAt: string; // ISO 8601形式の文字列
+  updatedAt: string; // ISO 8601形式の文字列
+}
+```
+
+### Step 4: `useUser`カスタムフックの作成 (`frontend/src/hooks/useUser.ts`)
+
+`SWR`を利用して、認証済みユーザーの情報をグローバルに管理するためのカスタムフックを作成します。
+
+1.  `frontend/src/`内に`hooks`ディレクトリを作成します。
+2.  `frontend/src/hooks/`内に`useUser.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/hooks/useUser.ts
+
+import useSWR from 'swr';
+import { User } from '../types/user';
+import { fetcher } from '../lib/api';
+
+export const useUser = () => {
+  // SWRは第一引数のキー（ここでは'/api/users/me'）を使ってリクエストをキャッシュする
+  const { data, error, isLoading, mutate } = useSWR<User>('/api/users/me', fetcher);
+
+  const isNameRegistered = data ? data.name !== null : false;
+  const displayName = data ? data.name || data.university_email.split('@')[0] : 'Guest';
+
+  return {
+    user: data,
+    isLoading,
+    isError: error,
+    isNameRegistered,
+    displayName,
+    mutate, // キャッシュを手動で更新するための関数
+  };
+};
+```
+*思想:* `useSWR`フックは、APIからのデータ取得、キャッシュ、再検証を自動的に行います。`useUser`フックとしてラップすることで、アプリケーション内のどのコンポーネントからでも`useUser()`を呼び出すだけで、一貫したユーザーデータにアクセスできます。`mutate`関数を返すことで、ユーザー情報が更新された際に即座にUIに反映させることが可能になります。
+
+### Step 5: 初回登録モーダルの実装 (`frontend/src/components/ProfileModal.tsx`)
+
+ユーザー名が未登録の場合に表示するモーダルコンポーネントを作成します。
+
+1.  `frontend/src/`内に`components`ディレクトリを作成します。
+2.  `frontend/src/components//`内に`ProfileModal.tsx`ファイルを作成します。
+    （ここでは簡易的な実装を示します。実際には`Headless UI`などのライブラリを使うとより良いでしょう）
+
+```typescript
+// frontend/src/components/ProfileModal.tsx
+
+import React, { useState } from 'react';
+import { useUser } from '../hooks/useUser';
+import { updateUser } from '../lib/api';
+
+export const ProfileModal = () => {
+  const { user, mutate } = useUser();
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError('表示名を入力してください。');
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const updatedUserData = await updateUser(name);
+      // SWRのキャッシュを更新してUIに即時反映させる
+      mutate(updatedUserData, false); // falseは再検証を抑制するオプション
+    } catch (err) {
+      setError('更新に失敗しました。もう一度お試しください。');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ユーザー情報がロード中、または名前が登録済みの場合は何も表示しない
+  if (!user || user.name) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>ようこそ！</h2>
+        <p>他のユーザーに表示される名前を入力してください。</p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="例: 山田 太郎"
+            disabled={isSubmitting}
+          />
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? '登録中...' : '登録する'}
+          </button>
+          {error && <p className="error-message">{error}</p>}
+        </form>
+      </div>
+    </div>
+  );
+};
+```
+*思想:* このコンポーネントは、`useUser`フックから取得したユーザー状態にのみ依存します。`user.name`が`null`である限り表示され続け、名前の登録が成功すると`mutate`によって`user`オブジェクトが更新されるため、自動的に非表示になります。このように、コンポーネントは自身の状態を持つのではなく、グローバルな状態（SWRキャッシュ）を信頼することで、シンプルで予測可能な動作を実現します。
+
+### Step 6: `App.tsx`の修正
+
+最後に、`App.tsx`で`useUser`フックを呼び出し、モーダルを表示するように設定します。
+
+```typescript
+// frontend/src/App.tsx
+
+import { useUser } from './hooks/useUser';
+import { ProfileModal } from './components/ProfileModal';
+import './App.css'; // モーダル用のCSSを追記する必要がある
+
+function App() {
+  const { user, isLoading, isError, displayName } = useUser();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error fetching user data.</div>;
+  }
+
+  return (
+    <>
+      <ProfileModal />
+      
+      {/* メインコンテンツ */}
+      <div className={user && !user.name ? 'content-blurred' : ''}>
+        <header>
+          <h1>EbiYobi Calendar</h1>
+          <p>ようこそ, {displayName} さん</p>
+        </header>
+        {/* ここにカレンダーなどのメインコンポーネントが配置される */}
+      </div>
+    </>
+  );
+}
+
+export default App;
+```
+*思想:* `App.tsx`はアプリケーションの最上位コンポーネントとして、認証状態のチェックと、それに応じたUIの表示分岐（ローディング、エラー、メインコンテンツ）に責任を持ちます。`ProfileModal`は自身の表示ロジックを持つため、`App.tsx`はただ配置するだけで済みます。これにより、関心事が分離され、コードの見通しが良くなります。
+
+-   
+
+# Issue #4: データベースの初期構成
+
+このセクションでは、アプリケーションが使うデータの「設計図」を作り、それを実際のデータベースに反映させる方法を学びます。データベースは、アプリの情報を整理して保存する「倉庫」のようなものです。この倉庫の設計図を「スキーマ」と呼びます。
+
+## 1.4.1. Prismaスキーマ定義の理解と更新
+
+私たちのプロジェクトでは、**Prisma** というツールを使ってデータベースの設計図（スキーマ）を管理します。Prisma は、データベースの操作を簡単にしてくれる便利な道具です。
+
+1.  **`backend/prisma/schema.prisma` ファイルを開く:**
+    このファイルが、私たちのデータベースの設計図の「唯一の真実の源（Single Source of Truth）」となります。つまり、データベースの構造はすべてこのファイルで定義します。
+
+2.  **スキーマの内容を確認する:**
+    `issuse.md` の `1.4.1. Prismaスキーマ定義` に、このプロジェクトで使うテーブル（データの種類）とその中身（カラム）が詳しく書かれています。例えば、`User`（ユーザー）テーブルには `id` や `university_email`、`name` といった情報が保存されます。
+
+    ```prisma
+    // backend/prisma/schema.prisma の一部抜粋
+    model User {
+      id                      String                           @id @default(cuid())
+      university_email        String                           @unique
+      name                    String?                          // 初回ログイン時はNULL
+      // ... その他の項目
+    }
+    ```
+    *   **`model User { ... }`**: これは「ユーザー」という種類のデータを保存する「テーブル」の設計図です。
+    *   **`id String @id @default(cuid())`**: `id` はユーザーを識別するための番号（または文字列）です。`@id` は「この項目でユーザーを特定するよ」という意味で、`@default(cuid())` は「自動的にユニークなIDを割り振るよ」という意味です。
+    *   **`university_email String @unique`**: `university_email` は大学のメールアドレスです。`@unique` は「同じメールアドレスは2つとないよ」という意味で、重複を防ぎます。
+    *   **`name String?`**: `name` はユーザーの名前です。`?` がついているのは「名前がなくても大丈夫だよ（最初は空っぽでもいいよ）」という意味です。
+
+3.  **`schema.prisma` ファイルを更新する:**
+    `backend/prisma/schema.prisma` ファイルの内容が、`issuse.md` の `1.4.1. Prismaスキーマ定義` に記載されている内容と完全に一致していることを確認してください。もし異なっている場合は、`issuse.md` の内容で `backend/prisma/schema.prisma` を上書きしてください。
+
+    *   **操作によってできるようになること:** アプリケーションが扱うデータの種類（テーブル）と、それぞれのデータがどのような情報（カラム）を持つのかが明確に定義されます。これにより、アプリケーションがデータを保存したり、読み出したりする際のルールが確立されます。
+
+## 1.4.2. マイグレーションの実行
+
+データベースの設計図（`schema.prisma`）を更新したら、その変更を実際のデータベースに反映させる必要があります。この作業を「マイグレーション」と呼びます。Prisma は、このマイグレーション作業をとても簡単にしてくれます。
+
+1.  **ローカル開発環境のデータベースが起動していることを確認する:**
+    `docker-compose up -d` コマンドで起動した PostgreSQL データベースが動いていることを確認してください。データベースが動いていないと、Prisma は変更を反映できません。
+
+2.  **マイグレーションコマンドを実行する:**
+    `backend` ディレクトリに移動し、以下のコマンドを実行します。
+    ```bash
+    cd backend
+    npx prisma migrate dev --name <マイグレーションの概要>
+    ```
+    *   `<マイグレーションの概要>` の部分には、今回の変更内容がわかるような短い名前をつけます。例えば、初めてデータベースを作る場合は `init` や `initial-schema` などが良いでしょう。もし後で新しいテーブルを追加したり、既存のテーブルに項目を追加したりする場合は、`add-new-feature-table` のように、変更内容がわかる名前にします。
+    *   **操作によってできるようになること:** `npx prisma migrate dev` コマンドを実行すると、Prisma は `schema.prisma` の変更を検知し、その変更をデータベースに適用するための特別なファイル（マイグレーションファイル）を自動的に作成してくれます。そして、そのファイルを使って、実際にデータベースに新しいテーブルを作ったり、既存のテーブルを変更したりしてくれます。これにより、データベースの構造が `schema.prisma` の内容と常に一致するようになります。
+
+    *   **補足:** このコマンドは、データベースの変更履歴を管理するためのファイルも作成します。これにより、後からデータベースの構造を元に戻したり、別の環境に同じ構造を適用したりすることが容易になります。
+
+## 1.4.3. 本番データベースの準備 (手動設定)
+
+ローカル開発環境だけでなく、実際にアプリケーションを公開する「本番環境」や、テストを行う「ステージング環境」でもデータベースが必要です。これらのデータベースは、Google Cloud SQL を使って準備します。
+
+1.  **Google Cloud SQL for PostgreSQL インスタンスの作成:**
+    -   `Issue #3: CI/CD パイプラインの構築` の `1.3.3. バックエンド (Google Cloud Run) の設定` の手順で、既に Cloud SQL インスタンスを作成しているはずです。
+    -   **本番用 (`production`) とステージング用 (`staging`) の2つの PostgreSQL データベースインスタンス**が作成されていることを確認してください。
+    -   **操作によってできるようになること:** アプリケーションが本番環境やステージング環境で利用する、安定したデータベースがクラウド上に用意されます。
+
+2.  **本番環境へのマイグレーション適用:**
+    本番環境のデータベースに `schema.prisma` の変更を適用する（テーブルを作成する）作業は、手動で行うのではなく、**CI/CD パイプライン経由で安全に実行する計画**です。
+
+    *   **なぜ自動化するのか？**
+        手動でデータベースの変更を行うと、以下のような問題が発生しやすくなります。
+        -   **ヒューマンエラー:** コマンドの打ち間違いや手順の漏れなど、人為的なミスが起こりやすい。
+        -   **環境間の差異:** 開発環境と本番環境でデータベースの構造が異なってしまい、アプリケーションが正しく動作しなくなる可能性がある。
+        -   **ロールバックの困難さ:** 問題が発生した際に、以前の状態に戻すのが難しい。
+        CI/CD パイプラインに組み込むことで、これらのリスクを最小限に抑え、より確実で安全にデータベースの更新を行うことができます。
+
+    *   **具体的な自動化の仕組み（概要）:**
+        -   **Cloud Build のトリガー:** GitHub の `main` ブランチにコードがプッシュされると、Cloud Build が自動的に起動します。
+        -   **コンテナイメージのビルド:** Cloud Build は、`Dockerfile` に基づいてバックエンドアプリケーションの新しいコンテナイメージをビルドします。
+        -   **マイグレーションの実行:** ビルドプロセスの一部として、またはデプロイ後のコンテナ起動時に、Prisma のマイグレーションコマンド (`npx prisma migrate deploy`) が自動的に実行されるように設定します。これにより、最新の `schema.prisma` の内容が本番データベースに適用されます。
+        -   **Cloud Run へのデプロイ:** マイグレーションが成功した後、新しいコンテナイメージが Cloud Run サービスにデプロイされ、アプリケーションが更新されます。
+
+    *   **操作によってできるようになること:**
+        -   **データベースの自動更新:** コードの変更（特に `schema.prisma` の変更）が GitHub にプッシュされるだけで、自動的に本番データベースの構造に反映されるようになります。
+        -   **デプロイプロセスの安全性向上:** 手動での操作ミスが減り、データベースの更新がより確実に行われるようになります。
+        -   **開発効率の向上:** 開発者はデータベースの更新を手動で行う手間が省け、アプリケーション開発に集中できるようになります。
+        -   **環境の一貫性:** 開発環境と本番環境のデータベーススキーマが常に同期されるようになります。
+
+
+# Issue #6: カレンダー機能の実装
+
+このセクションでは、`issuse.md`の「2.2. カレンダー機能の実装」に基づき、アプリケーションの中核機能であるカレンダー画面を実装する手順を詳述します。
+
+## 2.2.1. フロントエンド側の実装
+
+まず、ユーザーが実際に目にするカレンダー画面から実装を進めます。
+
+### Step 1: 依存関係のインストール
+
+カレンダー機能を実現するために、`FullCalendar`という非常に人気のあるライブラリを使用します。以下のコマンドで、必要なパッケージを`frontend`ディレクトリにインストールします。
+
+```bash
+# frontend ディレクトリで実行
+npm install @fullcalendar/react @fullcalendar/core @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction
+```
+*   **思想:**
+    *   `@fullcalendar/react`: ReactでFullCalendarを使うための公式コンポーネントです。
+    *   `@fullcalendar/core`: FullCalendarの本体です。
+    *   `@fullcalendar/daygrid`: 月表示カレンダー（`dayGridMonth`）など、グリッドベースの表示を提供します。
+    *   `@fullcalendar/timegrid`: 週表示や日表示（`timeGridWeek`, `timeGridDay`）など、時間軸を持つ表示を提供します。
+    *   `@fullcalendar/interaction`: カレンダー上での日付クリックやイベントドラッグなどの操作を可能にします。
+    *   このように、FullCalendarは機能ごとにパッケージが分かれているため、必要なものだけをインストールすることで、アプリケーションのサイズを最適化できます。
+
+### Step 2: カレンダーコンポーネントの作成 (`frontend/src/components/Calendar.tsx`)
+
+カレンダーを表示するための専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`Calendar.tsx`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/Calendar.tsx
+
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const Calendar = () => {
+  return (
+    <FullCalendar
+      plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+      initialView="dayGridMonth"
+      headerToolbar={{
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      }}
+      events={`${API_BASE_URL}/api/events`}
+      eventColor="#3788d8" // デフォルトのイベント色
+      // TODO: イベントの種類に応じて色を変えるためのeventClassNamesプロパティなどを後で追加
+      // TODO: イベントクリック時の処理をeventClickプロパティで後で追加
+    />
+  );
+};
+```
+*   **思想:**
+    *   **コンポーネント化:** カレンダーに関連するロジックを`Calendar.tsx`に集約することで、`App.tsx`をシンプルに保ち、コードの見通しを良くします。
+    *   **プラグインシステム:** `plugins`プロパティに使用したい機能をプラグインとして渡します。これにより、FullCalendarのコア機能は軽量に保たれ、必要な機能だけを柔軟に追加できます。
+    *   **宣言的なUI:** `headerToolbar`のようなプロパティに必要な設定をオブジェクトとして渡すだけで、複雑なUI（ヘッダーのボタン配置など）を簡単に構築できます。
+    *   **API連携の簡潔さ:** `events`プロパティにバックエンドのAPIエンドポイントのURLを直接渡すだけで、FullCalendarが自動的にそのURLにリクエストを送信し、イベントデータを取得・表示してくれます。カレンダーの表示期間（月や週）を切り替えると、`?start=...&end=...`というクエリパラメータを付けて自動で再リクエストしてくれるため、開発者はデータ取得のロジックをほとんど意識する必要がありません。
+
+### Step 3: `App.tsx`の修正
+
+作成した`Calendar`コンポーネントを`App.tsx`に組み込みます。
+
+```typescript
+// frontend/src/App.tsx の `// ここにカレンダーなどのメインコンポーネントが配置される` 部分を修正
+
+import { Calendar } from './components/Calendar'; // インポートを追加
+
+// ... (既存のコード)
+
+      <div className={user && !user.name ? 'content-blurred' : ''}>
+        <header>
+          <h1>EbiYobi Calendar</h1>
+          <p>ようこそ, {displayName} さん</p>
+        </header>
+        <main>
+          <Calendar />
+        </main>
+      </div>
+
+// ... (既存のコード)
+```
+*   **思想:** `App.tsx`は、認証状態の管理やページ全体のレイアウトといった、より大きな関心事に集中します。カレンダーの具体的な実装は`Calendar`コンポーネントに委ねることで、関心の分離（Separation of Concerns）という設計原則を守ります。
+
+#### Step 4: フロントエンドの動作確認
+
+ここまでの実装で、フロントエンド側の基本的なUIとAPIへのリクエストが正しく動作するかを確認します。
+
+1.  **開発サーバーの起動:**
+    *   ターミナル②でバックエンドサーバー (`npm run dev`) を、ターミナル③でフロントエンドサーバー (`npm run dev`) をそれぞれ起動します。
+
+2.  **ブラウザでの確認:**
+    *   ブラウザで `http://localhost:5173` を開きます。
+
+3.  **想定される動作（修正前）:**
+    *   画面には「Error fetching user data.」というメッセージが表示されます。これは、ローカル環境ではIAP認証ヘッダーが存在しないため、バックエンドの`/api/users/me`へのリクエストが`401 Unauthorized`エラーとなり、フロントエンドがそれを正しくハンドリングしている証拠です。この段階ではまだカレンダーのUIは表示されません。
+
+*   **思想:**
+    *   この段階的な確認により、フロントエンドのコンポーネント構造やAPIリクエストのロジックが、バックエンドの実装に先立って正しく機能しているかを検証します。エラーが想定通りに発生することを確認するのも、開発の重要なプロセスです。
+
+#### 補足: ローカル環境でUIを完全に表示させるための一時的な修正
+
+認証エラーによってUIの表示がブロックされているため、カレンダーUIの見た目などを確認したい場合は、一時的にバックエンドの認証をバイパスする修正が必要です。
+
+##### 一時的な認証バイパスの追加
+
+**警告:** この変更はローカル開発のテストを容易にするためのものであり、セキュリティリスクを伴います。**このコードをコミットしたり、本番環境にデプロイしたりしないでください。**
+
+以下の手順で `backend/src/middleware/auth.ts` を修正します。
+
+1.  `iapAuthMiddleware`関数を以下のように変更し、開発環境でのみダミーの認証情報を設定するロジックを追加します。
+
+```typescript
+// backend/src/middleware/auth.ts
+
+// ... (既存のコード)
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // IAPから付与されるヘッダー情報を取得
+  let emailHeader = req.headers['x-goog-authenticated-user-email'];
+
+  // ==============================================================================
+  // ▼▼▼【開発用の一時的な認証バイパス】▼▼▼
+  // 警告: このコードブロックはローカル開発環境でのテストを容易にするためのものです。
+  //       本番環境にデプロイする前には、必ずこのロジックを削除または無効化してください。
+  //       このままデプロイすると、誰でも認証なしでAPIにアクセスできてしまいます。
+  if (process.env.NODE_ENV !== 'production' && !emailHeader) {
+    console.warn('*****************************************************');
+    console.warn('* [開発用警告] IAP認証がバイパスされました。      *');
+    console.warn('* ダミーユーザーで処理を続行します。              *');
+    console.warn('*****************************************************');
+    emailHeader = 'accounts.google.com:test-user@example.com'; // ダミーのヘッダー情報
+  }
+  // ▲▲▲【開発用の一時的な認証バイパス】▲▲▲
+  // ==============================================================================
+
+  // ヘッダーが存在しない場合はエラー
+  if (!emailHeader) {
+    return res.status(401).send('Unauthorized: Missing IAP header');
+  }
+  
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // 許可するドメインのリストに、ダミーユーザーのドメインを一時的に追加
+  const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu', 'example.com']; 
+
+  const domain = email.split('@')[1];
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).send('Forbidden: Access denied for this organization.');
+  }
+
+  try {
+    // ... (以降のユーザー検索・作成ロジックは変更なし)
+  } catch (error) {
+    // ...
+  }
+};
+```
+
+##### 認証バイパスの復元（削除）方法
+
+動作確認が完了したら、**必ず**以下の手順で認証バイパスのコードを削除し、元の状態に戻してください。
+
+1.  `backend/src/middleware/auth.ts`の`iapAuthMiddleware`関数を、以下のオリジナルコードに戻します。
+
+```typescript
+// backend/src/middleware/auth.ts (元の状態)
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // IAPから付与されるヘッダー情報を取得
+  const emailHeader = req.headers['x-goog-authenticated-user-email'];
+  
+  // ヘッダーが存在しない場合はエラー
+  if (!emailHeader) {
+    return res.status(401).send('Unauthorized: Missing IAP header');
+  }
+  
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // 許可するドメインのリスト（ダミードメインを削除）
+  const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu'];
+
+  const domain = email.split('@')[1];
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).send('Forbidden: Access denied for this organization.');
+  }
+
+  try {
+    let user = await prisma.user.findUnique({
+      where: { university_email: email },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          university_email: email,
+        },
+      });
+    }
+
+    req.user = user;
+    next();
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+```
+
+## 2.2.2. バックエンド側の実装
+
+次に、フロントエンドのFullCalendarにイベントデータを提供するAPIをバックエンドに実装します。
+
+### Step 1: カレンダーイベント取得APIの作成 (`backend/src/routes/events.ts`)
+
+カレンダーイベントに関連するAPIエンドポイントをまとめたルーターを作成します。
+
+1.  `backend/src/routes/`内に`events.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/events.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/events - カレンダーに表示する全てのイベントを取得
+router.get('/', async (req, res) => {
+  // FullCalendarから送られてくるクエリパラメータを取得
+  const { start, end } = req.query;
+
+  if (typeof start !== 'string' || typeof end !== 'string') {
+    return res.status(400).json({ error: 'start and end query parameters are required' });
+  }
+
+  try {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    // TODO: データベースから3種類の予定（公式講義、私的補講、個人予定）を取得するロジックを実装
+    // 現時点では、動作確認のために空の配列を返す
+    // "strict": true の設定のため、空配列には型注釈が必要
+    const events: Record<string, any>[] = [];
+
+    res.json(events);
+
+  } catch (error) {
+    console.error('Failed to fetch events:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **責務の分離:** ユーザー情報関連のAPIは`user.ts`、イベント関連のAPIは`events.ts`と、機能ごとにファイルを分割することで、コードの管理を容易にします。
+    *   **APIのインターフェース定義:** まずはAPIが受け取るリクエスト（クエリパラメータ`start`, `end`）と、返すレスポンス（JSON配列）の型を明確に定義します。この段階では、内部の複雑なロジックは後回しにし、APIの「出入り口」を固めることに集中します。
+    *   **段階的な実装:** データベースからデータを取得するロジックは複雑になりがちです。そのため、まずは空の配列を返すだけの最小限の実装を行い、APIエンドポイント自体が正しく動作することを確認します。その後、データベースとの連携という次のステップに進むことで、問題の切り分けが容易になります。
+
+### Step 2: ルーティングの統合 (`backend/src/index.ts`)
+
+作成したイベント用ルーターを`index.ts`に組み込みます。このAPIは認証済みのユーザーのみがアクセスできるように、既存の認証ミドルウェアを適用します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+import eventRouter from './routes/events'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **思想:**
+    *   **ミドルウェアの再利用:** 認証は多くのAPIで必要となる共通の関心事です。`iapAuthMiddleware`を`/api/events`にも適用することで、同じ認証ロジックを再利用し、コードの重複を防ぎます。
+    *   **一貫性のあるAPI設計:** `/api/`で始まるパスにAPIエンドポイントを集約し、それぞれに適切なミドルウェアとルーターを割り当てることで、アプリケーション全体の構造に一貫性を持たせます。
+
+### Step 3: データベースからのイベント取得ロジックの実装（詳細）
+
+このステップは、`backend/src/routes/events.ts`の`// TODO:`コメント部分を実際に実装する、この機能で最も複雑な部分です。
+
+*   **実装方針:**
+    1.  **3つのデータソース:** `OfficialLecture`, `SupplementaryLecture`, `PersonalEvent`の3つのテーブルから、指定された期間（`startDate`から`endDate`）に該当するデータをそれぞれ取得します。
+    2.  **ヘルパー関数の活用:** 「公式講義を生成するロジック」「私的補講を取得するロジック」「個人予定を取得するロジック」をそれぞれ別の非同期関数に分割します。これにより、`router.get`ハンドラ本体は各ヘルパー関数を呼び出して結果を結合するだけになり、コードが非常に読みやすくなります。
+    3.  **データ形式の変換:** 各テーブルから取得したデータを、FullCalendarが要求するJSON形式（`title`, `start`, `end`, `className`など）に変換します。
+    4.  **公式講義の動的生成:** `OfficialLecture`は「毎週月曜1限」のような繰り返しデータとして保存されています。これを、指定された期間内の具体的な日付のイベント（例: `2025-07-14`の1限、`2025-07-21`の1限...）に動的に変換するロジックが必要になります。その際、`LectureException`テーブルを参照し、休講日などを除外する必要があります。
+    5.  **認可:** `PersonalEvent`を取得する際は、ログインしているユーザー（`req.user.id`）自身の予定のみを取得するように、`where`句に条件を追加します。
+
+*   **思想:**
+    *   **複雑性の分割:** 一つの大きな問題を、管理しやすい小さな問題（ヘルパー関数）に分割して解決します。これは、ソフトウェア開発における最も重要な原則の一つです。
+    *   **データ変換層:** データベースのスキーマ構造と、APIがクライアントに返すJSONの構造は、必ずしも一致しません。データベースから取得したデータを、クライアント（この場合はFullCalendar）が最も使いやすい形式に変換する層を設けることで、フロントエンドとバックエンドの結合度を下げ、それぞれが独立して変更しやすくなります。
+    *   **パフォーマンスへの配慮:** データベースへのクエリは、アプリケーションのパフォーマンスに大きな影響を与えます。必要なデータのみを効率的に取得するクエリ（`where`句の活用）を記述することが重要です。
+
+#### Step 4: バックエンドの動作確認テスト
+
+ここまでの実装で、バックエンドが3種類の予定を正しく集計し、FullCalendarが期待する形式で返却できるかを確認します。
+
+##### テストの準備
+
+1.  **テストデータの投入:**
+    *   APIが返すイベント情報を確認するためには、データベースにテスト用のデータが必要です。`psql`やDBeaverのようなデータベースクライアントを使い、ローカルのPostgreSQLデータベース（`ebiyobi_dev`）に直接接続します。
+    *   以下のテーブルに、カレンダーの表示期間内に収まるようなサンプルデータを数件`INSERT`しておきます。
+
+    *   **SQL実行例:**
+        以下のSQLクエリを実行することで、基本的なテストデータを投入できます。（`id`や`cuid()`は適宜調整してください）
+
+        ```sql
+        -- 前提: 認証バイパスで使われるダミーユーザーのIDを確認しておく必要があります。
+        -- 'test-user@example.com' で初回アクセスした際に自動生成されるユーザーのIDを事前にSELECT文で確認してください。
+        -- 例: SELECT id FROM "User" WHERE university_email = 'test-user@example.com';
+        -- 以下では、そのIDが 'clx...' であったと仮定します。
+
+        -- 学期マスタ (Term)
+        INSERT INTO "Term" (id, name, "startDate", "endDate") VALUES (1, '2025年度前期', '2025-04-01T00:00:00Z', '2025-09-30T23:59:59Z') ON CONFLICT (id) DO NOTHING;
+
+        -- 時限マスタ (PeriodSetting)
+        INSERT INTO "PeriodSetting" (id, period, "startTime", "endTime") VALUES (1, 1, '09:00', '10:30') ON CONFLICT (id) DO NOTHING;
+        INSERT INTO "PeriodSetting" (id, period, "startTime", "endTime") VALUES (2, 2, '10:40', '12:10') ON CONFLICT (id) DO NOTHING;
+
+        -- 大学公式の講義 (OfficialLecture)
+        -- 月曜1限: 微分積分学
+        INSERT INTO "OfficialLecture" (id, name, professor, "dayOfWeek", period, "termId") VALUES (1, '微分積分学', '高木教授', 1, 1, 1) ON CONFLICT (id) DO NOTHING;
+        -- 火曜2限: 統計学
+        INSERT INTO "OfficialLecture" (id, name, professor, "dayOfWeek", period, "termId") VALUES (2, '統計学', '大前教授', 2, 2, 1) ON CONFLICT (id) DO NOTHING;
+
+        -- 私的補講 (SupplementaryLecture)
+        INSERT INTO "SupplementaryLecture" (id, location, "startTime", "endTime", description, "creatorId", "officialLectureId") VALUES (1, '図書館2階', '2025-07-15T10:00:00Z', '2025-07-15T12:00:00Z', '第5回までの内容の復習会です。', 'clx...', 2) ON CONFLICT (id) DO NOTHING;
+
+        -- 個人予定 (PersonalEvent)
+        INSERT INTO "PersonalEvent" (id, title, "startTime", "endTime", description, "userId") VALUES (1, 'サークルMTG', '2025-07-16T18:00:00Z', '2025-07-16T19:00:00Z', '夏合宿の計画', 'clx...') ON CONFLICT (id) DO NOTHING;
+
+        -- 休講情報 (LectureException)
+        -- 7/14の微分積分学は休講
+        INSERT INTO "LectureException" (id, "originalDate", type, "officialLectureId") VALUES (1, '2025-07-14T00:00:00Z', 'CANCELLED', 1) ON CONFLICT (id) DO NOTHING;
+        ```
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、**一時的な認証バイパスが有効になっている**ことを確認してください。
+
+##### テストの実施方法
+
+テストには、フロントエンドを経由する方法と、APIクライアントで直接APIを叩く方法の2通りがあります。
+
+**方法A: ブラウザを使った総合テスト（推奨）**
+
+1.  ブラウザで`http://localhost:5173`にアクセスします。
+2.  **想定される結果:**
+    *   認証が成功し、名前入力モーダルが表示（または既に登録済みの場合はヘッダーに名前が表示）されます。
+    *   カレンダーUI上に、**準備段階で投入したテストデータがイベントとして表示されていること**を確認します。
+    *   ブラウザの開発者ツール（F12）の「ネットワーク」タブで、`/api/events?...`へのリクエストのステータスコードが`200 OK`になり、レスポンスとしてイベント情報のJSON配列が返ってきていることを確認します。
+
+**方法B: APIクライアントツールを使った単体テスト**
+
+1.  PostmanやInsomniaなどのAPIクライアントツールを起動します。
+2.  以下のリクエストを作成して送信します。
+    *   **メソッド:** `GET`
+    *   **URL:** `http://localhost:3001/api/events`
+    *   **ヘッダー:**
+        *   `Key`: `x-goog-authenticated-user-email`
+        *   `Value`: `accounts.google.com:test-user@example.com`
+    *   **クエリパラメータ:**
+        *   `start`: テストデータが含まれる期間の開始日時 (例: `2025-07-01T00:00:00Z`)
+        *   `end`: テストデータが含まれる期間の終了日時 (例: `2025-07-31T23:59:59Z`)
+3.  **想定される結果:**
+    *   レスポンスのステータスコードが`200 OK`であること。
+    *   レスポンスボディに、FullCalendar形式に変換されたイベント情報のJSON配列が含まれていることを確認します。
+
+##### テスト後の復帰
+
+*   このテストではアプリケーションコードの変更は不要です。
+*   データベースに投入したテストデータは、今後の開発でも利用できるため、必ずしも削除する必要はありません。
+*   **重要:** ローカルでの動作確認のために`backend/src/middleware/auth.ts`に一時的な認証バイパスを追加した場合は、テスト完了後、**必ずその変更を元に戻してください。** この作業を怠ると、深刻なセキュリティリスクを伴うコードがリポジトリに残ってしまう可能性があります。
