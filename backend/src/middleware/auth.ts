@@ -26,7 +26,7 @@ export const iapAuthMiddleware = async (req: Request, res: Response, next: NextF
   if (!emailHeader) {
     return res.status(401).send('Unauthorized: Missing IAP header');
   }
-
+  
   // ヘッダーからメールアドレスを抽出 (例: "accounts.google.com:user@example.com" -> "user@example.com")
   const email = (emailHeader as string).split(':').pop();
   if (!email) {
@@ -34,7 +34,7 @@ export const iapAuthMiddleware = async (req: Request, res: Response, next: NextF
   }
 
   // 許可するドメインのリストを定義（環境変数から読み込むのが理想的）
-  const ALLOWED_DOMAINS = ['stu.hus.ac.jp', 'hus.ac.jp']; // 例: 実際のドメインに置き換える
+  const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu']; // 例: 実際のドメインに置き換える
 
   const domain = email.split('@')[1]; // メールアドレスからドメインを抽出
   if (!ALLOWED_DOMAINS.includes(domain)) {

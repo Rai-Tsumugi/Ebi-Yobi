@@ -135,7 +135,7 @@ git push origin develop
 
 `issuse.md`で定義されているラベルをGitHubに設定し、Issueの分類を容易にします。
 
-1.  GitHubリポジトリの `Issues` タブ > `Labels` メニューを選択します。
+1.  GitHubリポジリの `Issues` タブ > `Labels` メニューを選択します。
 2.  `New label` ボタンをクリックし、以下のラベルを一つずつ作成します。
 
 ### 種別 (Type)
@@ -319,7 +319,7 @@ docker-compose up -d
 -   **ターミナル③ (`frontend` ディレクトリ):** フロントエンドの開発サーバーを起動します。
     ```bash
     cd frontend
-    npm run dev
+    npm install
     ```
 
 **3. 動作確認**
@@ -494,7 +494,7 @@ const port = process.env.PORT || 3001;
 // VercelのプレビューデプロイURLは動的に変わるため、正規表現で許可する
 const allowedOrigins = [
   'http://localhost:5173', // ローカル開発環境
-  /https:\/\/ebiyobi-frontend-.*\.vercel\.app$/, // Vercelのプレビュー環境
+  /https:\/\/ebiyobi-frontend-.*\.vercel\.app\/, // Vercelのプレビュー環境
   // TODO: 本番環境のドメインを追加
 ];
 app.use(cors({
@@ -873,7 +873,7 @@ export const useUser = () => {
 ユーザー名が未登録の場合に表示するモーダルコンポーネントを作成します。
 
 1.  `frontend/src/`内に`components`ディレクトリを作成します。
-2.  `frontend/src/components/`内に`ProfileModal.tsx`ファイルを作成します。
+2.  `frontend/src/components//`内に`ProfileModal.tsx`ファイルを作成します。
     （ここでは簡易的な実装を示します。実際には`Headless UI`などのライブラリを使うとより良いでしょう）
 
 ```typescript
@@ -1063,3 +1063,400 @@ export default App;
         -   **デプロイプロセスの安全性向上:** 手動での操作ミスが減り、データベースの更新がより確実に行われるようになります。
         -   **開発効率の向上:** 開発者はデータベースの更新を手動で行う手間が省け、アプリケーション開発に集中できるようになります。
         -   **環境の一貫性:** 開発環境と本番環境のデータベーススキーマが常に同期されるようになります。
+
+
+# Issue #6: カレンダー機能の実装
+
+このセクションでは、`issuse.md`の「2.2. カレンダー機能の実装」に基づき、アプリケーションの中核機能であるカレンダー画面を実装する手順を詳述します。
+
+## 2.2.1. フロントエンド側の実装
+
+まず、ユーザーが実際に目にするカレンダー画面から実装を進めます。
+
+### Step 1: 依存関係のインストール
+
+カレンダー機能を実現するために、`FullCalendar`という非常に人気のあるライブラリを使用します。以下のコマンドで、必要なパッケージを`frontend`ディレクトリにインストールします。
+
+```bash
+# frontend ディレクトリで実行
+npm install @fullcalendar/react @fullcalendar/core @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction
+```
+*   **思想:**
+    *   `@fullcalendar/react`: ReactでFullCalendarを使うための公式コンポーネントです。
+    *   `@fullcalendar/core`: FullCalendarの本体です。
+    *   `@fullcalendar/daygrid`: 月表示カレンダー（`dayGridMonth`）など、グリッドベースの表示を提供します。
+    *   `@fullcalendar/timegrid`: 週表示や日表示（`timeGridWeek`, `timeGridDay`）など、時間軸を持つ表示を提供します。
+    *   `@fullcalendar/interaction`: カレンダー上での日付クリックやイベントドラッグなどの操作を可能にします。
+    *   このように、FullCalendarは機能ごとにパッケージが分かれているため、必要なものだけをインストールすることで、アプリケーションのサイズを最適化できます。
+
+### Step 2: カレンダーコンポーネントの作成 (`frontend/src/components/Calendar.tsx`)
+
+カレンダーを表示するための専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`Calendar.tsx`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/Calendar.tsx
+
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const Calendar = () => {
+  return (
+    <FullCalendar
+      plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+      initialView="dayGridMonth"
+      headerToolbar={{
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      }}
+      events={`${API_BASE_URL}/api/events`}
+      eventColor="#3788d8" // デフォルトのイベント色
+      // TODO: イベントの種類に応じて色を変えるためのeventClassNamesプロパティなどを後で追加
+      // TODO: イベントクリック時の処理をeventClickプロパティで後で追加
+    />
+  );
+};
+```
+*   **思想:**
+    *   **コンポーネント化:** カレンダーに関連するロジックを`Calendar.tsx`に集約することで、`App.tsx`をシンプルに保ち、コードの見通しを良くします。
+    *   **プラグインシステム:** `plugins`プロパティに使用したい機能をプラグインとして渡します。これにより、FullCalendarのコア機能は軽量に保たれ、必要な機能だけを柔軟に追加できます。
+    *   **宣言的なUI:** `headerToolbar`のようなプロパティに必要な設定をオブジェクトとして渡すだけで、複雑なUI（ヘッダーのボタン配置など）を簡単に構築できます。
+    *   **API連携の簡潔さ:** `events`プロパティにバックエンドのAPIエンドポイントのURLを直接渡すだけで、FullCalendarが自動的にそのURLにリクエストを送信し、イベントデータを取得・表示してくれます。カレンダーの表示期間（月や週）を切り替えると、`?start=...&end=...`というクエリパラメータを付けて自動で再リクエストしてくれるため、開発者はデータ取得のロジックをほとんど意識する必要がありません。
+
+### Step 3: `App.tsx`の修正
+
+作成した`Calendar`コンポーネントを`App.tsx`に組み込みます。
+
+```typescript
+// frontend/src/App.tsx の `// ここにカレンダーなどのメインコンポーネントが配置される` 部分を修正
+
+import { Calendar } from './components/Calendar'; // インポートを追加
+
+// ... (既存のコード)
+
+      <div className={user && !user.name ? 'content-blurred' : ''}>
+        <header>
+          <h1>EbiYobi Calendar</h1>
+          <p>ようこそ, {displayName} さん</p>
+        </header>
+        <main>
+          <Calendar />
+        </main>
+      </div>
+
+// ... (既存のコード)
+```
+*   **思想:** `App.tsx`は、認証状態の管理やページ全体のレイアウトといった、より大きな関心事に集中します。カレンダーの具体的な実装は`Calendar`コンポーネントに委ねることで、関心の分離（Separation of Concerns）という設計原則を守ります。
+
+#### Step 4: フロントエンドの動作確認
+
+ここまでの実装で、フロントエンド側の基本的なUIとAPIへのリクエストが正しく動作するかを確認します。
+
+1.  **開発サーバーの起動:**
+    *   ターミナル②でバックエンドサーバー (`npm run dev`) を、ターミナル③でフロントエンドサーバー (`npm run dev`) をそれぞれ起動します。
+
+2.  **ブラウザでの確認:**
+    *   ブラウザで `http://localhost:5173` を開きます。
+
+3.  **想定される動作（修正前）:**
+    *   画面には「Error fetching user data.」というメッセージが表示されます。これは、ローカル環境ではIAP認証ヘッダーが存在しないため、バックエンドの`/api/users/me`へのリクエストが`401 Unauthorized`エラーとなり、フロントエンドがそれを正しくハンドリングしている証拠です。この段階ではまだカレンダーのUIは表示されません。
+
+*   **思想:**
+    *   この段階的な確認により、フロントエンドのコンポーネント構造やAPIリクエストのロジックが、バックエンドの実装に先立って正しく機能しているかを検証します。エラーが想定通りに発生することを確認するのも、開発の重要なプロセスです。
+
+#### 補足: ローカル環境でUIを完全に表示させるための一時的な修正
+
+認証エラーによってUIの表示がブロックされているため、カレンダーUIの見た目などを確認したい場合は、一時的にバックエンドの認証をバイパスする修正が必要です。
+
+##### 一時的な認証バイパスの追加
+
+**警告:** この変更はローカル開発のテストを容易にするためのものであり、セキュリティリスクを伴います。**このコードをコミットしたり、本番環境にデプロイしたりしないでください。**
+
+以下の手順で `backend/src/middleware/auth.ts` を修正します。
+
+1.  `iapAuthMiddleware`関数を以下のように変更し、開発環境でのみダミーの認証情報を設定するロジックを追加します。
+
+```typescript
+// backend/src/middleware/auth.ts
+
+// ... (既存のコード)
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // IAPから付与されるヘッダー情報を取得
+  let emailHeader = req.headers['x-goog-authenticated-user-email'];
+
+  // ==============================================================================
+  // ▼▼▼【開発用の一時的な認証バイパス】▼▼▼
+  // 警告: このコードブロックはローカル開発環境でのテストを容易にするためのものです。
+  //       本番環境にデプロイする前には、必ずこのロジックを削除または無効化してください。
+  //       このままデプロイすると、誰でも認証なしでAPIにアクセスできてしまいます。
+  if (process.env.NODE_ENV !== 'production' && !emailHeader) {
+    console.warn('*****************************************************');
+    console.warn('* [開発用警告] IAP認証がバイパスされました。      *');
+    console.warn('* ダミーユーザーで処理を続行します。              *');
+    console.warn('*****************************************************');
+    emailHeader = 'accounts.google.com:test-user@example.com'; // ダミーのヘッダー情報
+  }
+  // ▲▲▲【開発用の一時的な認証バイパス】▲▲▲
+  // ==============================================================================
+
+  // ヘッダーが存在しない場合はエラー
+  if (!emailHeader) {
+    return res.status(401).send('Unauthorized: Missing IAP header');
+  }
+  
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // 許可するドメインのリストに、ダミーユーザーのドメインを一時的に追加
+  const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu', 'example.com']; 
+
+  const domain = email.split('@')[1];
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).send('Forbidden: Access denied for this organization.');
+  }
+
+  try {
+    // ... (以降のユーザー検索・作成ロジックは変更なし)
+  } catch (error) {
+    // ...
+  }
+};
+```
+
+##### 認証バイパスの復元（削除）方法
+
+動作確認が完了したら、**必ず**以下の手順で認証バイパスのコードを削除し、元の状態に戻してください。
+
+1.  `backend/src/middleware/auth.ts`の`iapAuthMiddleware`関数を、以下のオリジナルコードに戻します。
+
+```typescript
+// backend/src/middleware/auth.ts (元の状態)
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // IAPから付与されるヘッダー情報を取得
+  const emailHeader = req.headers['x-goog-authenticated-user-email'];
+  
+  // ヘッダーが存在しない場合はエラー
+  if (!emailHeader) {
+    return res.status(401).send('Unauthorized: Missing IAP header');
+  }
+  
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // 許可するドメインのリスト（ダミードメインを削除）
+  const ALLOWED_DOMAINS = ['your-university.ac.jp', 'another-allowed.edu'];
+
+  const domain = email.split('@')[1];
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).send('Forbidden: Access denied for this organization.');
+  }
+
+  try {
+    let user = await prisma.user.findUnique({
+      where: { university_email: email },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          university_email: email,
+        },
+      });
+    }
+
+    req.user = user;
+    next();
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+```
+
+## 2.2.2. バックエンド側の実装
+
+次に、フロントエンドのFullCalendarにイベントデータを提供するAPIをバックエンドに実装します。
+
+### Step 1: カレンダーイベント取得APIの作成 (`backend/src/routes/events.ts`)
+
+カレンダーイベントに関連するAPIエンドポイントをまとめたルーターを作成します。
+
+1.  `backend/src/routes/`内に`events.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/events.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/events - カレンダーに表示する全てのイベントを取得
+router.get('/', async (req, res) => {
+  // FullCalendarから送られてくるクエリパラメータを取得
+  const { start, end } = req.query;
+
+  if (typeof start !== 'string' || typeof end !== 'string') {
+    return res.status(400).json({ error: 'start and end query parameters are required' });
+  }
+
+  try {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    // TODO: データベースから3種類の予定（公式講義、私的補講、個人予定）を取得するロジックを実装
+    // 現時点では、動作確認のために空の配列を返す
+    // "strict": true の設定のため、空配列には型注釈が必要
+    const events: Record<string, any>[] = [];
+
+    res.json(events);
+
+  } catch (error) {
+    console.error('Failed to fetch events:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **責務の分離:** ユーザー情報関連のAPIは`user.ts`、イベント関連のAPIは`events.ts`と、機能ごとにファイルを分割することで、コードの管理を容易にします。
+    *   **APIのインターフェース定義:** まずはAPIが受け取るリクエスト（クエリパラメータ`start`, `end`）と、返すレスポンス（JSON配列）の型を明確に定義します。この段階では、内部の複雑なロジックは後回しにし、APIの「出入り口」を固めることに集中します。
+    *   **段階的な実装:** データベースからデータを取得するロジックは複雑になりがちです。そのため、まずは空の配列を返すだけの最小限の実装を行い、APIエンドポイント自体が正しく動作することを確認します。その後、データベースとの連携という次のステップに進むことで、問題の切り分けが容易になります。
+
+### Step 2: ルーティングの統合 (`backend/src/index.ts`)
+
+作成したイベント用ルーターを`index.ts`に組み込みます。このAPIは認証済みのユーザーのみがアクセスできるように、既存の認証ミドルウェアを適用します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+import eventRouter from './routes/events'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **思想:**
+    *   **ミドルウェアの再利用:** 認証は多くのAPIで必要となる共通の関心事です。`iapAuthMiddleware`を`/api/events`にも適用することで、同じ認証ロジックを再利用し、コードの重複を防ぎます。
+    *   **一貫性のあるAPI設計:** `/api/`で始まるパスにAPIエンドポイントを集約し、それぞれに適切なミドルウェアとルーターを割り当てることで、アプリケーション全体の構造に一貫性を持たせます。
+
+### Step 3: データベースからのイベント取得ロジックの実装（詳細）
+
+このステップは、`backend/src/routes/events.ts`の`// TODO:`コメント部分を実際に実装する、この機能で最も複雑な部分です。
+
+*   **実装方針:**
+    1.  **3つのデータソース:** `OfficialLecture`, `SupplementaryLecture`, `PersonalEvent`の3つのテーブルから、指定された期間（`startDate`から`endDate`）に該当するデータをそれぞれ取得します。
+    2.  **ヘルパー関数の活用:** 「公式講義を生成するロジック」「私的補講を取得するロジック」「個人予定を取得するロジック」をそれぞれ別の非同期関数に分割します。これにより、`router.get`ハンドラ本体は各ヘルパー関数を呼び出して結果を結合するだけになり、コードが非常に読みやすくなります。
+    3.  **データ形式の変換:** 各テーブルから取得したデータを、FullCalendarが要求するJSON形式（`title`, `start`, `end`, `className`など）に変換します。
+    4.  **公式講義の動的生成:** `OfficialLecture`は「毎週月曜1限」のような繰り返しデータとして保存されています。これを、指定された期間内の具体的な日付のイベント（例: `2025-07-14`の1限、`2025-07-21`の1限...）に動的に変換するロジックが必要になります。その際、`LectureException`テーブルを参照し、休講日などを除外する必要があります。
+    5.  **認可:** `PersonalEvent`を取得する際は、ログインしているユーザー（`req.user.id`）自身の予定のみを取得するように、`where`句に条件を追加します。
+
+*   **思想:**
+    *   **複雑性の分割:** 一つの大きな問題を、管理しやすい小さな問題（ヘルパー関数）に分割して解決します。これは、ソフトウェア開発における最も重要な原則の一つです。
+    *   **データ変換層:** データベースのスキーマ構造と、APIがクライアントに返すJSONの構造は、必ずしも一致しません。データベースから取得したデータを、クライアント（この場合はFullCalendar）が最も使いやすい形式に変換する層を設けることで、フロントエンドとバックエンドの結合度を下げ、それぞれが独立して変更しやすくなります。
+    *   **パフォーマンスへの配慮:** データベースへのクエリは、アプリケーションのパフォーマンスに大きな影響を与えます。必要なデータのみを効率的に取得するクエリ（`where`句の活用）を記述することが重要です。
+
+#### Step 4: バックエンドの動作確認テスト
+
+ここまでの実装で、バックエンドが3種類の予定を正しく集計し、FullCalendarが期待する形式で返却できるかを確認します。
+
+##### テストの準備
+
+1.  **テストデータの投入:**
+    *   APIが返すイベント情報を確認するためには、データベースにテスト用のデータが必要です。`psql`やDBeaverのようなデータベースクライアントを使い、ローカルのPostgreSQLデータベース（`ebiyobi_dev`）に直接接続します。
+    *   以下のテーブルに、カレンダーの表示期間内に収まるようなサンプルデータを数件`INSERT`しておきます。
+
+    *   **SQL実行例:**
+        以下のSQLクエリを実行することで、基本的なテストデータを投入できます。（`id`や`cuid()`は適宜調整してください）
+
+        ```sql
+        -- 前提: 認証バイパスで使われるダミーユーザーのIDを確認しておく必要があります。
+        -- 'test-user@example.com' で初回アクセスした際に自動生成されるユーザーのIDを事前にSELECT文で確認してください。
+        -- 例: SELECT id FROM "User" WHERE university_email = 'test-user@example.com';
+        -- 以下では、そのIDが 'clx...' であったと仮定します。
+
+        -- 学期マスタ (Term)
+        INSERT INTO "Term" (id, name, "startDate", "endDate") VALUES (1, '2025年度前期', '2025-04-01T00:00:00Z', '2025-09-30T23:59:59Z') ON CONFLICT (id) DO NOTHING;
+
+        -- 時限マスタ (PeriodSetting)
+        INSERT INTO "PeriodSetting" (id, period, "startTime", "endTime") VALUES (1, 1, '09:00', '10:30') ON CONFLICT (id) DO NOTHING;
+        INSERT INTO "PeriodSetting" (id, period, "startTime", "endTime") VALUES (2, 2, '10:40', '12:10') ON CONFLICT (id) DO NOTHING;
+
+        -- 大学公式の講義 (OfficialLecture)
+        -- 月曜1限: 微分積分学
+        INSERT INTO "OfficialLecture" (id, name, professor, "dayOfWeek", period, "termId") VALUES (1, '微分積分学', '高木教授', 1, 1, 1) ON CONFLICT (id) DO NOTHING;
+        -- 火曜2限: 統計学
+        INSERT INTO "OfficialLecture" (id, name, professor, "dayOfWeek", period, "termId") VALUES (2, '統計学', '大前教授', 2, 2, 1) ON CONFLICT (id) DO NOTHING;
+
+        -- 私的補講 (SupplementaryLecture)
+        INSERT INTO "SupplementaryLecture" (id, location, "startTime", "endTime", description, "creatorId", "officialLectureId") VALUES (1, '図書館2階', '2025-07-15T10:00:00Z', '2025-07-15T12:00:00Z', '第5回までの内容の復習会です。', 'clx...', 2) ON CONFLICT (id) DO NOTHING;
+
+        -- 個人予定 (PersonalEvent)
+        INSERT INTO "PersonalEvent" (id, title, "startTime", "endTime", description, "userId") VALUES (1, 'サークルMTG', '2025-07-16T18:00:00Z', '2025-07-16T19:00:00Z', '夏合宿の計画', 'clx...') ON CONFLICT (id) DO NOTHING;
+
+        -- 休講情報 (LectureException)
+        -- 7/14の微分積分学は休講
+        INSERT INTO "LectureException" (id, "originalDate", type, "officialLectureId") VALUES (1, '2025-07-14T00:00:00Z', 'CANCELLED', 1) ON CONFLICT (id) DO NOTHING;
+        ```
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、**一時的な認証バイパスが有効になっている**ことを確認してください。
+
+##### テストの実施方法
+
+テストには、フロントエンドを経由する方法と、APIクライアントで直接APIを叩く方法の2通りがあります。
+
+**方法A: ブラウザを使った総合テスト（推奨）**
+
+1.  ブラウザで`http://localhost:5173`にアクセスします。
+2.  **想定される結果:**
+    *   認証が成功し、名前入力モーダルが表示（または既に登録済みの場合はヘッダーに名前が表示）されます。
+    *   カレンダーUI上に、**準備段階で投入したテストデータがイベントとして表示されていること**を確認します。
+    *   ブラウザの開発者ツール（F12）の「ネットワーク」タブで、`/api/events?...`へのリクエストのステータスコードが`200 OK`になり、レスポンスとしてイベント情報のJSON配列が返ってきていることを確認します。
+
+**方法B: APIクライアントツールを使った単体テスト**
+
+1.  PostmanやInsomniaなどのAPIクライアントツールを起動します。
+2.  以下のリクエストを作成して送信します。
+    *   **メソッド:** `GET`
+    *   **URL:** `http://localhost:3001/api/events`
+    *   **ヘッダー:**
+        *   `Key`: `x-goog-authenticated-user-email`
+        *   `Value`: `accounts.google.com:test-user@example.com`
+    *   **クエリパラメータ:**
+        *   `start`: テストデータが含まれる期間の開始日時 (例: `2025-07-01T00:00:00Z`)
+        *   `end`: テストデータが含まれる期間の終了日時 (例: `2025-07-31T23:59:59Z`)
+3.  **想定される結果:**
+    *   レスポンスのステータスコードが`200 OK`であること。
+    *   レスポンスボディに、FullCalendar形式に変換されたイベント情報のJSON配列が含まれていることを確認します。
+
+##### テスト後の復帰
+
+*   このテストではアプリケーションコードの変更は不要です。
+*   データベースに投入したテストデータは、今後の開発でも利用できるため、必ずしも削除する必要はありません。
+*   **重要:** ローカルでの動作確認のために`backend/src/middleware/auth.ts`に一時的な認証バイパスを追加した場合は、テスト完了後、**必ずその変更を元に戻してください。** この作業を怠ると、深刻なセキュリティリスクを伴うコードがリポジトリに残ってしまう可能性があります。

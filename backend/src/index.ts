@@ -32,10 +32,14 @@ app.use(express.json());
 // --- ルーティングの設定 ---
 import { iapAuthMiddleware } from './middleware/auth';
 import userRouter from './routes/user';
+import eventRouter from './routes/events'; // インポートを追加
 
-// /api/users で始まるリクエストに対して、まず認証ミドルウェアを適用し、
-// その後userRouterで定義されたエンドポイントに処理を渡す
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
 app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
 
 
 
