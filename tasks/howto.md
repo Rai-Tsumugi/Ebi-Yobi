@@ -5,7 +5,7 @@
 ## 1. ブランチの作成と保護設定
 
 ### a. `develop` ブランチの作成
-以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジトリにプッシュします。
+以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジリにプッシュします。
 （この手順は実行済みです）
 ```bash
 git branch develop
@@ -15,7 +15,7 @@ git push origin develop
 ### b. ブランチの保護設定 (手動設定)
 `main` ブランチと `develop` ブランチに意図しないコミットが行われるのを防ぐため、保護ルールを設定します。
 
-1.  GitHubリポジトリのページにアクセスします。
+1.  GitHubリポジリのページにアクセスします。
 2.  `Settings` タブ > `Branches` メニューを選択します。
 3.  `Add branch protection rule` をクリックします。
 4.  **`main` ブランチの保護ルール:**
@@ -52,7 +52,7 @@ git push origin develop
 
 `issuse.md`で定義されているラベルをGitHubに設定し、Issueの分類を容易にします。
 
-1.  GitHubリポジトリの `Issues` タブ > `Labels` メニューを選択します。
+1.  GitHubリポジリの `Issues` タブ > `Labels` メニューを選択します。
 2.  `New label` ボタンをクリックし、以下のラベルを一つずつ作成します。
 
 ### 種別 (Type)
@@ -94,12 +94,12 @@ git push origin develop
 
 # Issue #1: プロジェクト管理システムのセットアップ手順
 
-このドキュメントは、GitHubリポジトリの初期設定を行うための手順書です。
+このドキュメントは、GitHubリポジリの初期設定を行うための手順書です。
 
 ## 1. ブランチの作成と保護設定
 
 ### a. `develop` ブランチの作成
-以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジトリにプッシュします。
+以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジリにプッシュします。
 （この手順は実行済みです）
 ```bash
 git branch develop
@@ -109,7 +109,7 @@ git push origin develop
 ### b. ブランチの保護設定 (手動設定)
 `main` ブランチと `develop` ブランチに意図しないコミットが行われるのを防ぐため、保護ルールを設定します。
 
-1.  GitHubリポジトリのページにアクセスします。
+1.  GitHubリポジリのページにアクセスします。
 2.  `Settings` タブ > `Branches` メニューを選択します。
 3.  `Add branch protection rule` をクリックします。
 4.  **`main` ブランチの保護ルール:**
@@ -329,7 +329,7 @@ docker-compose up -d
 
 # Issue #3: CI/CD パイプラインの構築
 
-このセクションでは、GitHubリポジトリへのプッシュをトリガーとして、VercelおよびGoogle Cloudへ自動的にデプロイされるCI/CDパイプラインを構築する手順を詳述します。
+このセクションでは、GitHubリポジリへのプッシュをトリガーとして、VercelおよびGoogle Cloudへ自動的にデプロイされるCI/CDパイプラインを構築する手順を詳述します。
 
 ## 1.3.1. デプロイ戦略の確認
 
@@ -340,11 +340,11 @@ docker-compose up -d
 
 ## 1.3.2. フロントエンド (Vercel) の設定
 
-Vercel のダッシュボード上で GitHub リポジトリを連携し、以下の設定を行います。
+Vercel のダッシュボード上で GitHub リポジリを連携し、以下の設定を行います。
 
 1.  **Vercel プロジェクトの作成と GitHub 連携:**
     -   Vercel のウェブサイト (`vercel.com`) にアクセスし、ログインします。
-    -   `New Project` をクリックし、GitHub リポジトリをインポートします。
+    -   `New Project` をクリックし、GitHub リポジリをインポートします。
     -   プロジェクトのルートディレクトリがモノレポのルート (`ebi-yobi/`) であることを確認し、`frontend` ディレクトリを Vercel プロジェクトのルートとして設定します。
 
 2.  **プロジェクト設定:**
@@ -359,7 +359,7 @@ Vercel のダッシュボード上で GitHub リポジトリを連携し、以�
 
 ## 1.3.3. バックエンド (Google Cloud Run) の設定
 
-Google Cloud Build を利用して、GitHub リポジトリの変更を検知し Cloud Run へデプロイします。
+Google Cloud Build を利用して、GitHub リポジリの変更を検知し Cloud Run へデプロイします。
 
 1.  **Google Cloud プロジェクトのセットアップ:**
     -   Google Cloud Console (`https://console.cloud.google.com/`) にアクセスし、新しいプロジェクトを作成するか、既存のプロジェクトを選択します。
@@ -422,7 +422,7 @@ Google Cloud Build を利用して、GitHub リポジトリの変更を検知し
     -   Cloud Console で `Cloud Build` に移動し、`トリガー` をクリックします。
     -   **`main` ブランチ用と `develop` ブランチ用の2つのトリガー**を作成します。
     -   **イベント:** `ブランチにプッシュする` を選択します。
-    -   **ソース:** GitHub リポジトリと対象ブランチ (`main` または `develop`) を選択します。
+    -   **ソース:** GitHub リポジリと対象ブランチ (`main` または `develop`) を選択します。
     -   **ビルド構成:** `Dockerfile` を選択し、`backend` ディレクトリ内の `Dockerfile` を指定します。
     -   **ビルド済みイメージの保存先:** 対応する Cloud Run サービスにデプロイされるイメージのパスを指定します。
     -   **操作によってできるようになること:** GitHub へのコードプッシュをトリガーとして、バックエンドアプリケーションのコンテナイメージが自動的にビルドされ、対応する Cloud Run サービスにデプロイされるようになります。これにより、CI/CD パイプラインの自動化が実現します。
@@ -448,6 +448,88 @@ Cloud Run で稼働するバックエンド API を保護するため、Identity
 -   `develop` ブランチにプッシュし、ステージング環境のフロントエンドとバックエンドがデプロイされ、正しく連携していることを確認します。
 -   `main` ブランチにプルリクエストをマージし、本番環境のフロントエンドとバックエンドがデプロイされ、正しく連携していることを確認します。
 -   IAP が正しく機能し、認証されたユーザーのみがバックエンド API にアクセスできることを確認します。
+
+# Issue #4: データベースの初期構成
+
+このセクションでは、アプリケーションが使うデータの「設計図」を作り、それを実際のデータベースに反映させる方法を学びます。データベースは、アプリの情報を整理して保存する「倉庫」のようなものです。この倉庫の設計図を「スキーマ」と呼びます。
+
+## 1.4.1. Prismaスキーマ定義の理解と更新
+
+私たちのプロジェクトでは、**Prisma** というツールを使ってデータベースの設計図（スキーマ）を管理します。Prisma は、データベースの操作を簡単にしてくれる便利な道具です。
+
+1.  **`backend/prisma/schema.prisma` ファイルを開く:**
+    このファイルが、私たちのデータベースの設計図の「唯一の真実の源（Single Source of Truth）」となります。つまり、データベースの構造はすべてこのファイルで定義します。
+
+2.  **スキーマの内容を確認する:**
+    `issuse.md` の `1.4.1. Prismaスキーマ定義` に、このプロジェクトで使うテーブル（データの種類）とその中身（カラム）が詳しく書かれています。例えば、`User`（ユーザー）テーブルには `id` や `university_email`、`name` といった情報が保存されます。
+
+    ```prisma
+    // backend/prisma/schema.prisma の一部抜粋
+    model User {
+      id                      String                           @id @default(cuid())
+      university_email        String                           @unique
+      name                    String?                          // 初回ログイン時はNULL
+      // ... その他の項目
+    }
+    ```
+    *   **`model User { ... }`**: これは「ユーザー」という種類のデータを保存する「テーブル」の設計図です。
+    *   **`id String @id @default(cuid())`**: `id` はユーザーを識別するための番号（または文字列）です。`@id` は「この項目でユーザーを特定するよ」という意味で、`@default(cuid())` は「自動的にユニークなIDを割り振るよ」という意味です。
+    *   **`university_email String @unique`**: `university_email` は大学のメールアドレスです。`@unique` は「同じメールアドレスは2つとないよ」という意味で、重複を防ぎます。
+    *   **`name String?`**: `name` はユーザーの名前です。`?` がついているのは「名前がなくても大丈夫だよ（最初は空っぽでもいいよ）」という意味です。
+
+3.  **`schema.prisma` ファイルを更新する:**
+    `backend/prisma/schema.prisma` ファイルの内容が、`issuse.md` の `1.4.1. Prismaスキーマ定義` に記載されている内容と完全に一致していることを確認してください。もし異なっている場合は、`issuse.md` の内容で `backend/prisma/schema.prisma` を上書きしてください。
+
+    *   **操作によってできるようになること:** アプリケーションが扱うデータの種類（テーブル）と、それぞれのデータがどのような情報（カラム）を持つのかが明確に定義されます。これにより、アプリケーションがデータを保存したり、読み出したりする際のルールが確立されます。
+
+## 1.4.2. マイグレーションの実行
+
+データベースの設計図（`schema.prisma`）を更新したら、その変更を実際のデータベースに反映させる必要があります。この作業を「マイグレーション」と呼びます。Prisma は、このマイグレーション作業をとても簡単にしてくれます。
+
+1.  **ローカル開発環境のデータベースが起動していることを確認する:**
+    `docker-compose up -d` コマンドで起動した PostgreSQL データベースが動いていることを確認してください。データベースが動いていないと、Prisma は変更を反映できません。
+
+2.  **マイグレーションコマンドを実行する:**
+    `backend` ディレクトリに移動し、以下のコマンドを実行します。
+    ```bash
+    cd backend
+    npx prisma migrate dev --name <マイグレーションの概要>
+    ```
+    *   `<マイグレーションの概要>` の部分には、今回の変更内容がわかるような短い名前をつけます。例えば、初めてデータベースを作る場合は `init` や `initial-schema` などが良いでしょう。もし後で新しいテーブルを追加したり、既存のテーブルに項目を追加したりする場合は、`add-new-feature-table` のように、変更内容がわかる名前にします。
+    *   **操作によってできるようになること:** `npx prisma migrate dev` コマンドを実行すると、Prisma は `schema.prisma` の変更を検知し、その変更をデータベースに適用するための特別なファイル（マイグレーションファイル）を自動的に作成してくれます。そして、そのファイルを使って、実際にデータベースに新しいテーブルを作ったり、既存のテーブルを変更したりしてくれます。これにより、データベースの構造が `schema.prisma` の内容と常に一致するようになります。
+
+    *   **補足:** このコマンドは、データベースの変更履歴を管理するためのファイルも作成します。これにより、後からデータベースの構造を元に戻したり、別の環境に同じ構造を適用したりすることが容易になります。
+
+## 1.4.3. 本番データベースの準備 (手動設定)
+
+ローカル開発環境だけでなく、実際にアプリケーションを公開する「本番環境」や、テストを行う「ステージング環境」でもデータベースが必要です。これらのデータベースは、Google Cloud SQL を使って準備します。
+
+1.  **Google Cloud SQL for PostgreSQL インスタンスの作成:**
+    -   `Issue #3: CI/CD パイプラインの構築` の `1.3.3. バックエンド (Google Cloud Run) の設定` の手順で、既に Cloud SQL インスタンスを作成しているはずです。
+    -   **本番用 (`production`) とステージング用 (`staging`) の2つの PostgreSQL データベースインスタンス**が作成されていることを確認してください。
+    -   **操作によってできるようになること:** アプリケーションが本番環境やステージング環境で利用する、安定したデータベースがクラウド上に用意されます。
+
+2.  **本番環境へのマイグレーション適用:**
+    本番環境のデータベースに `schema.prisma` の変更を適用する（テーブルを作成する）作業は、手動で行うのではなく、**CI/CD パイプライン経由で安全に実行する計画**です。
+
+    *   **なぜ自動化するのか？**
+        手動でデータベースの変更を行うと、以下のような問題が発生しやすくなります。
+        -   **ヒューマンエラー:** コマンドの打ち間違いや手順の漏れなど、人為的なミスが起こりやすい。
+        -   **環境間の差異:** 開発環境と本番環境でデータベースの構造が異なってしまい、アプリケーションが正しく動作しなくなる可能性がある。
+        -   **ロールバックの困難さ:** 問題が発生した際に、以前の状態に戻すのが難しい。
+        CI/CD パイプラインに組み込むことで、これらのリスクを最小限に抑え、より確実で安全にデータベースの更新を行うことができます。
+
+    *   **具体的な自動化の仕組み（概要）:**
+        -   **Cloud Build のトリガー:** GitHub の `main` ブランチにコードがプッシュされると、Cloud Build が自動的に起動します。
+        -   **コンテナイメージのビルド:** Cloud Build は、`Dockerfile` に基づいてバックエンドアプリケーションの新しいコンテナイメージをビルドします。
+        -   **マイグレーションの実行:** ビルドプロセスの一部として、またはデプロイ後のコンテナ起動時に、Prisma のマイグレーションコマンド (`npx prisma migrate deploy`) が自動的に実行されるように設定します。これにより、最新の `schema.prisma` の内容が本番データベースに適用されます。
+        -   **Cloud Run へのデプロイ:** マイグレーションが成功した後、新しいコンテナイメージが Cloud Run サービスにデプロイされ、アプリケーションが更新されます。
+
+    *   **操作によってできるようになること:**
+        -   **データベースの自動更新:** コードの変更（特に `schema.prisma` の変更）が GitHub にプッシュされるだけで、自動的に本番データベースの構造に反映されるようになります。
+        -   **デプロイプロセスの安全性向上:** 手動での操作ミスが減り、データベースの更新がより確実に行われるようになります。
+        -   **開発効率の向上:** 開発者はデータベースの更新を手動で行う手間が省け、アプリケーション開発に集中できるようになります。
+        -   **環境の一貫性:** 開発環境と本番環境のデータベーススキーマが常に同期されるようになります。
 
 # Issue #5: 認証機構の実装
 
@@ -846,7 +928,7 @@ export interface User {
 // frontend/src/hooks/useUser.ts
 
 import useSWR from 'swr';
-import { User } from '../types/user';
+import type { User } from '../types/user';
 import { fetcher } from '../lib/api';
 
 export const useUser = () => {
@@ -873,8 +955,7 @@ export const useUser = () => {
 ユーザー名が未登録の場合に表示するモーダルコンポーネントを作成します。
 
 1.  `frontend/src/`内に`components`ディレクトリを作成します。
-2.  `frontend/src/components//`内に`ProfileModal.tsx`ファイルを作成します。
-    （ここでは簡易的な実装を示します。実際には`Headless UI`などのライブラリを使うとより良いでしょう）
+2.  `frontend/src/components//`内に`ProfileModal.tsx`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
 // frontend/src/components/ProfileModal.tsx
@@ -979,91 +1060,6 @@ function App() {
 export default App;
 ```
 *思想:* `App.tsx`はアプリケーションの最上位コンポーネントとして、認証状態のチェックと、それに応じたUIの表示分岐（ローディング、エラー、メインコンテンツ）に責任を持ちます。`ProfileModal`は自身の表示ロジックを持つため、`App.tsx`はただ配置するだけで済みます。これにより、関心事が分離され、コードの見通しが良くなります。
-
--   
-
-# Issue #4: データベースの初期構成
-
-このセクションでは、アプリケーションが使うデータの「設計図」を作り、それを実際のデータベースに反映させる方法を学びます。データベースは、アプリの情報を整理して保存する「倉庫」のようなものです。この倉庫の設計図を「スキーマ」と呼びます。
-
-## 1.4.1. Prismaスキーマ定義の理解と更新
-
-私たちのプロジェクトでは、**Prisma** というツールを使ってデータベースの設計図（スキーマ）を管理します。Prisma は、データベースの操作を簡単にしてくれる便利な道具です。
-
-1.  **`backend/prisma/schema.prisma` ファイルを開く:**
-    このファイルが、私たちのデータベースの設計図の「唯一の真実の源（Single Source of Truth）」となります。つまり、データベースの構造はすべてこのファイルで定義します。
-
-2.  **スキーマの内容を確認する:**
-    `issuse.md` の `1.4.1. Prismaスキーマ定義` に、このプロジェクトで使うテーブル（データの種類）とその中身（カラム）が詳しく書かれています。例えば、`User`（ユーザー）テーブルには `id` や `university_email`、`name` といった情報が保存されます。
-
-    ```prisma
-    // backend/prisma/schema.prisma の一部抜粋
-    model User {
-      id                      String                           @id @default(cuid())
-      university_email        String                           @unique
-      name                    String?                          // 初回ログイン時はNULL
-      // ... その他の項目
-    }
-    ```
-    *   **`model User { ... }`**: これは「ユーザー」という種類のデータを保存する「テーブル」の設計図です。
-    *   **`id String @id @default(cuid())`**: `id` はユーザーを識別するための番号（または文字列）です。`@id` は「この項目でユーザーを特定するよ」という意味で、`@default(cuid())` は「自動的にユニークなIDを割り振るよ」という意味です。
-    *   **`university_email String @unique`**: `university_email` は大学のメールアドレスです。`@unique` は「同じメールアドレスは2つとないよ」という意味で、重複を防ぎます。
-    *   **`name String?`**: `name` はユーザーの名前です。`?` がついているのは「名前がなくても大丈夫だよ（最初は空っぽでもいいよ）」という意味です。
-
-3.  **`schema.prisma` ファイルを更新する:**
-    `backend/prisma/schema.prisma` ファイルの内容が、`issuse.md` の `1.4.1. Prismaスキーマ定義` に記載されている内容と完全に一致していることを確認してください。もし異なっている場合は、`issuse.md` の内容で `backend/prisma/schema.prisma` を上書きしてください。
-
-    *   **操作によってできるようになること:** アプリケーションが扱うデータの種類（テーブル）と、それぞれのデータがどのような情報（カラム）を持つのかが明確に定義されます。これにより、アプリケーションがデータを保存したり、読み出したりする際のルールが確立されます。
-
-## 1.4.2. マイグレーションの実行
-
-データベースの設計図（`schema.prisma`）を更新したら、その変更を実際のデータベースに反映させる必要があります。この作業を「マイグレーション」と呼びます。Prisma は、このマイグレーション作業をとても簡単にしてくれます。
-
-1.  **ローカル開発環境のデータベースが起動していることを確認する:**
-    `docker-compose up -d` コマンドで起動した PostgreSQL データベースが動いていることを確認してください。データベースが動いていないと、Prisma は変更を反映できません。
-
-2.  **マイグレーションコマンドを実行する:**
-    `backend` ディレクトリに移動し、以下のコマンドを実行します。
-    ```bash
-    cd backend
-    npx prisma migrate dev --name <マイグレーションの概要>
-    ```
-    *   `<マイグレーションの概要>` の部分には、今回の変更内容がわかるような短い名前をつけます。例えば、初めてデータベースを作る場合は `init` や `initial-schema` などが良いでしょう。もし後で新しいテーブルを追加したり、既存のテーブルに項目を追加したりする場合は、`add-new-feature-table` のように、変更内容がわかる名前にします。
-    *   **操作によってできるようになること:** `npx prisma migrate dev` コマンドを実行すると、Prisma は `schema.prisma` の変更を検知し、その変更をデータベースに適用するための特別なファイル（マイグレーションファイル）を自動的に作成してくれます。そして、そのファイルを使って、実際にデータベースに新しいテーブルを作ったり、既存のテーブルを変更したりしてくれます。これにより、データベースの構造が `schema.prisma` の内容と常に一致するようになります。
-
-    *   **補足:** このコマンドは、データベースの変更履歴を管理するためのファイルも作成します。これにより、後からデータベースの構造を元に戻したり、別の環境に同じ構造を適用したりすることが容易になります。
-
-## 1.4.3. 本番データベースの準備 (手動設定)
-
-ローカル開発環境だけでなく、実際にアプリケーションを公開する「本番環境」や、テストを行う「ステージング環境」でもデータベースが必要です。これらのデータベースは、Google Cloud SQL を使って準備します。
-
-1.  **Google Cloud SQL for PostgreSQL インスタンスの作成:**
-    -   `Issue #3: CI/CD パイプラインの構築` の `1.3.3. バックエンド (Google Cloud Run) の設定` の手順で、既に Cloud SQL インスタンスを作成しているはずです。
-    -   **本番用 (`production`) とステージング用 (`staging`) の2つの PostgreSQL データベースインスタンス**が作成されていることを確認してください。
-    -   **操作によってできるようになること:** アプリケーションが本番環境やステージング環境で利用する、安定したデータベースがクラウド上に用意されます。
-
-2.  **本番環境へのマイグレーション適用:**
-    本番環境のデータベースに `schema.prisma` の変更を適用する（テーブルを作成する）作業は、手動で行うのではなく、**CI/CD パイプライン経由で安全に実行する計画**です。
-
-    *   **なぜ自動化するのか？**
-        手動でデータベースの変更を行うと、以下のような問題が発生しやすくなります。
-        -   **ヒューマンエラー:** コマンドの打ち間違いや手順の漏れなど、人為的なミスが起こりやすい。
-        -   **環境間の差異:** 開発環境と本番環境でデータベースの構造が異なってしまい、アプリケーションが正しく動作しなくなる可能性がある。
-        -   **ロールバックの困難さ:** 問題が発生した際に、以前の状態に戻すのが難しい。
-        CI/CD パイプラインに組み込むことで、これらのリスクを最小限に抑え、より確実で安全にデータベースの更新を行うことができます。
-
-    *   **具体的な自動化の仕組み（概要）:**
-        -   **Cloud Build のトリガー:** GitHub の `main` ブランチにコードがプッシュされると、Cloud Build が自動的に起動します。
-        -   **コンテナイメージのビルド:** Cloud Build は、`Dockerfile` に基づいてバックエンドアプリケーションの新しいコンテナイメージをビルドします。
-        -   **マイグレーションの実行:** ビルドプロセスの一部として、またはデプロイ後のコンテナ起動時に、Prisma のマイグレーションコマンド (`npx prisma migrate deploy`) が自動的に実行されるように設定します。これにより、最新の `schema.prisma` の内容が本番データベースに適用されます。
-        -   **Cloud Run へのデプロイ:** マイグレーションが成功した後、新しいコンテナイメージが Cloud Run サービスにデプロイされ、アプリケーションが更新されます。
-
-    *   **操作によってできるようになること:**
-        -   **データベースの自動更新:** コードの変更（特に `schema.prisma` の変更）が GitHub にプッシュされるだけで、自動的に本番データベースの構造に反映されるようになります。
-        -   **デプロイプロセスの安全性向上:** 手動での操作ミスが減り、データベースの更新がより確実に行われるようになります。
-        -   **開発効率の向上:** 開発者はデータベースの更新を手動で行う手間が省け、アプリケーション開発に集中できるようになります。
-        -   **環境の一貫性:** 開発環境と本番環境のデータベーススキーマが常に同期されるようになります。
-
 
 # Issue #6: カレンダー機能の実装
 
@@ -1459,4 +1455,635 @@ app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
 
 *   このテストではアプリケーションコードの変更は不要です。
 *   データベースに投入したテストデータは、今後の開発でも利用できるため、必ずしも削除する必要はありません。
-*   **重要:** ローカルでの動作確認のために`backend/src/middleware/auth.ts`に一時的な認証バイパスを追加した場合は、テスト完了後、**必ずその変更を元に戻してください。** この作業を怠ると、深刻なセキュリティリスクを伴うコードがリポジトリに残ってしまう可能性があります。
+*   **重要:** ローカルでの動作確認のために`backend/src/middleware/auth.ts`に一時的な認証バイパスを追加した場合は、テスト完了後、**必ずその変更を元に戻してください。** この作業を怠ると、深刻なセキュリティリスクを伴うコードがリポジリに残ってしまう可能性があります。
+
+# Issue #7: 私的補講の登録・閲覧機能の実装
+
+このセクションでは、`issuse.md`の「2.3. 私的補講の登録・閲覧機能の実装」に基づき、ユーザーが私的補講を登録し、その詳細情報を閲覧できるようにする機能の実装手順を詳述します。
+
+## 2.3.1. 詳細閲覧機能
+
+まず、カレンダーに表示された私的補講をクリックした際に、その詳細情報を表示するページを実装します。
+
+### Step 1: APIの設計と実装 (`backend/src/routes/supplementaryLectures.ts`)
+
+私的補講の詳細情報を取得するためのAPIエンドポイントをバックエンドに実装します。
+
+1.  `backend/src/routes/`内に`supplementaryLectures.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/supplementary-lectures/:id - 私的補講の詳細情報を取得
+router.get('/:id', async (req, res) => {
+  const lectureId = parseInt(req.params.id, 10);
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    const lecture = await prisma.supplementaryLecture.findUnique({
+      where: { id: lectureId },
+      include: {
+        officialLecture: true, // 関連する公式講義情報も取得
+        creator: true,         // 開催者情報も取得
+        attendees: true,       // 出席者数カウントのために取得
+      },
+    });
+
+    if (!lecture) {
+      return res.status(404).json({ error: 'Supplementary lecture not found' });
+    }
+
+    // レスポンス形式をissuse.mdに合わせて整形
+    const response = {
+      id: lecture.id,
+      officialLectureName: lecture.officialLecture.name,
+      location: lecture.location,
+      startTime: lecture.startTime.toISOString(),
+      endTime: lecture.endTime.toISOString(),
+      description: lecture.description,
+      creator: {
+        id: lecture.creator.id,
+        name: lecture.creator.name || lecture.creator.university_email.split('@')[0],
+      },
+      attendeeCount: lecture.attendees.length,
+      // TODO: ログインユーザーが出席済みかどうかのフラグ (isAttending) を後で追加
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Failed to fetch supplementary lecture:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **RESTful API:** リソース（私的補講）をIDで指定して取得する、RESTfulな設計に従います。
+    *   **関連データの取得:** `Prisma`の`include`オプションを活用することで、関連する`OfficialLecture`や`User`（開催者）の情報を効率的に一度のクエリで取得できます。
+    *   **データ整形:** データベースから取得した生データを、フロントエンドが利用しやすい形式に整形して返します。`issuse.md`で定義されたレスポンス形式に合わせることで、フロントエンドとの連携をスムーズにします。
+    *   **エラーハンドリング:** 無効なIDや存在しないリソースに対する適切なエラーレスポンス（`400 Bad Request`, `404 Not Found`）を返します。
+
+### Step 2: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した私的補講用ルーターを`index.ts`に組み込みます。このAPIも認証済みのユーザーのみがアクセスできるように、認証ミドルウェアを適用します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **思想:**
+    *   新しいAPIエンドポイントを既存のルーティング構造に組み込むことで、アプリケーション全体のAPI設計の一貫性を保ちます。
+
+### Step 3: フロントエンドのルーティングと詳細ページの作成
+
+私的補講の詳細を表示するためのページと、そこへのルーティングをフロントエンドに実装します。
+
+1.  **ルーティングライブラリの導入:**
+    *   Reactアプリケーションでルーティングを行うために、`react-router-dom`をインストールします。
+    ```bash
+    # frontend ディレクトリで実行
+    npm install react-router-dom
+    npm install -D @types/react-router-dom
+    ```
+    *   **思想:** `react-router-dom`は、URLに基づいて表示するコンポーネントを切り替えるための標準的なライブラリです。これにより、単一ページアプリケーション（SPA）でありながら、複数の「ページ」を持つかのように振る舞うことができます。
+
+2.  **`App.tsx`のルーティング設定:**
+    *   `App.tsx`を修正し、`BrowserRouter`と`Routes`、`Route`を使ってルーティングを設定します。
+    *   `/`パスにはカレンダーを表示し、`/lectures/:id`パスには私的補講の詳細ページを表示するようにします。
+
+```typescript
+// frontend/src/App.tsx
+
+import { useUser } from './hooks/useUser';
+import { ProfileModal } from './components/ProfileModal';
+import { Calendar } from './components/Calendar';
+import './App.css';
+import { BrowserRouter, Routes, Route } from 'react-router-dom'; // インポートを追加
+import { SupplementaryLectureDetail } from './components/SupplementaryLectureDetail'; // 後で作成するコンポーネント
+
+function App() {
+  const { user, isLoading, isError, displayName } = useUser();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error fetching user data.</div>;
+  }
+
+  return (
+    <BrowserRouter> {/* BrowserRouterでアプリケーションをラップ */}
+      <ProfileModal />
+      
+      <div className={user && !user.name ? 'content-blurred' : ''}>
+        <header>
+          <h1>EbiYobi Calendar</h1>
+          <p>ようこそ, {displayName} さん</p>
+        </header>
+        <main>
+          <Routes> {/* Routesでルーティングを定義 */}
+            <Route path="/" element={<Calendar />} /> {/* ルートパスにカレンダー */}
+            <Route path="/lectures/:id" element={<SupplementaryLectureDetail />} /> {/* 私的補講詳細ページ */}
+            {/* TODO: 他のルートもここに追加 */}
+          </Routes>
+        </main>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+*   **思想:**
+    *   **宣言的ルーティング:** `react-router-dom`は、コンポーネントベースでルーティングを定義できるため、Reactの思想と親和性が高いです。
+    *   **動的ルーティング:** `/lectures/:id`のようにパスパラメータを使用することで、一つのコンポーネントで複数の私的補講の詳細を表示できるようになります。
+
+3.  **私的補講詳細コンポーネントの作成 (`frontend/src/components/SupplementaryLectureDetail.tsx`)**
+    *   `frontend/src/components/`内に`SupplementaryLectureDetail.tsx`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/SupplementaryLectureDetail.tsx
+
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import useSWR from 'swr';
+import { fetcher } from '../lib/api';
+import type { User } from '../types/user'; // User型をインポート
+
+// 私的補講のAPIレスポンスの型定義
+interface SupplementaryLectureDetailData {
+  id: number;
+  officialLectureName: string;
+  location: string;
+  startTime: string; // ISO 8601形式
+  endTime: string;   // ISO 8601形式
+  description: string | null;
+  creator: {
+    id: string;
+    name: string | null;
+  };
+  attendeeCount: number;
+  // isAttending?: boolean; // 後で追加
+}
+
+export const SupplementaryLectureDetail = () => {
+  const { id } = useParams<{ id: string }>(); // URLからIDを取得
+
+  // SWRでAPIからデータを取得
+  const { data, error, isLoading } = useSWR<SupplementaryLectureDetailData>(
+    id ? `/api/supplementary-lectures/${id}` : null,
+    fetcher
+  );
+
+  if (isLoading) return <div>Loading supplementary lecture details...</div>;
+  if (error) return <div>Error loading details: {error.message}</div>;
+  if (!data) return <div>No details found.</div>;
+
+  // 日付のフォーマット
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleString(); // ローカルタイムゾーンで表示
+  };
+
+  return (
+    <div className="supplementary-lecture-detail">
+      <h2>{data.officialLectureName} 補講</h2>
+      <p><strong>場所:</strong> {data.location}</p>
+      <p><strong>日時:</strong> {formatDateTime(data.startTime)} - {formatDateTime(data.endTime)}</p>
+      {data.description && <p><strong>内容:</strong> {data.description}</p>}
+      <p><strong>開催者:</strong> {data.creator.name || data.creator.id}</p>
+      <p><strong>現在の出席者数:</strong> {data.attendeeCount}名</p>
+      {/* TODO: 出席登録/キャンセルボタンを後で追加 */}
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **`useParams`:** `react-router-dom`の`useParams`フックを使って、URLのパスパラメータ（`:id`）から私的補講のIDを簡単に取得します。
+    *   **`useSWR`によるデータ取得:** 認証機構の実装で学んだ`useSWR`をここでも活用し、APIから非同期にデータを取得し、ローディング状態やエラーハンドリングを簡潔に記述します。
+    *   **型定義の重要性:** APIレスポンスの型を`SupplementaryLectureDetailData`として明確に定義することで、コードの安全性を高め、開発時の補完を効かせます。
+    *   **日付のローカライズ:** `toLocaleString()`を使って、UTCで取得した日時をユーザーのローカルタイムゾーンで表示します。これは`issuse.md`の「日時の取り扱い」の基本設計方針に沿ったものです。
+
+### Step 4: カレンダーイベントクリック処理の追加 (`frontend/src/components/Calendar.tsx`)
+
+カレンダー上のイベントをクリックした際に、私的補講の詳細ページに遷移するように`Calendar.tsx`を修正します。
+
+```typescript
+// frontend/src/components/Calendar.tsx
+
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import { useNavigate } from 'react-router-dom'; // インポートを追加
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const Calendar = () => {
+  const navigate = useNavigate(); // useNavigateフックを使用
+
+  const handleEventClick = (clickInfo: any) => {
+    // 私的補講イベントの場合のみ詳細ページに遷移
+    if (clickInfo.event.extendedProps.type === 'supplementary') {
+      navigate(`/lectures/${clickInfo.event.id.replace('sup-', '')}`);
+    }
+    // TODO: 個人予定の場合は編集モーダルを表示するロジックを後で追加
+  };
+
+  return (
+    <FullCalendar
+      plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+      initialView="dayGridMonth"
+      headerToolbar={{
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      }}
+      events={`${API_BASE_URL}/api/events`}
+      eventColor="#3788d8" // デフォルトのイベント色
+      eventClick={handleEventClick} // eventClickハンドラを追加
+      // TODO: イベントの種類に応じて色を変えるためのeventClassNamesプロパティなどを後で追加
+    />
+  );
+};
+```
+*   **思想:**
+    *   **`useNavigate`:** `react-router-dom`の`useNavigate`フックを使って、プログラム的にURLを操作し、ページ遷移を実現します。
+    *   **イベントIDのパース:** FullCalendarのイベントIDは`sup-123`のような形式なので、`replace('sup-', '')`で実際のデータベースIDを抽出します。
+    *   **条件分岐:** イベントの種類（`extendedProps.type`）に応じて、異なるアクション（詳細ページ遷移、モーダル表示など）を実行できるようにします。
+
+## 2.3.2. 登録機能
+
+ユーザーが新しい私的補講を登録するためのフォームを実装します。
+
+### Step 1: APIの設計と実装 (`backend/src/routes/supplementaryLectures.ts`の拡張)
+
+私的補講を登録するためのAPIエンドポイントを`supplementaryLectures.ts`に追加します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts (既存のコードに追加)
+
+// ... (既存のimport文、router, prismaの定義)
+
+// POST /api/supplementary-lectures - 私的補講を登録
+router.post('/', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { officialLectureId, location, startTime, endTime, description } = req.body;
+
+  // 入力値のバリデーション
+  if (!officialLectureId || !location || !startTime || !endTime) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  if (new Date(startTime) >= new Date(endTime)) {
+    return res.status(400).json({ error: 'End time must be after start time' });
+  }
+
+  try {
+    const newLecture = await prisma.supplementaryLecture.create({
+      data: {
+        officialLectureId: parseInt(officialLectureId, 10),
+        location,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        description,
+        creatorId: req.user.id, // ログインユーザーをcreatorIdとして設定
+      },
+    });
+    res.status(201).json(newLecture); // 201 Createdを返す
+
+  } catch (error) {
+    console.error('Failed to create supplementary lecture:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **入力バリデーション:** APIの入口で入力値のチェックを行うことで、不正なデータがデータベースに登録されるのを防ぎます。
+    *   **認証済みユーザーの利用:** `req.user.id`を使って、誰が補講を作成したかを自動的に記録します。
+    *   **適切なHTTPステータスコード:** リソースの作成成功時には`201 Created`を返します。
+
+### Step 2: フロントエンドのフォームとAPI連携
+
+私的補講の登録フォームを作成し、バックエンドAPIと連携させます。
+
+1.  **フォーム管理ライブラリの導入:**
+    *   フォームの状態管理とバリデーションを効率的に行うために、`react-hook-form`をインストールします。
+    *   日時選択UIのために、`react-datepicker`をインストールします。
+    ```bash
+    # frontend ディレクトリで実行
+    npm install react-hook-form react-datepicker
+    npm install -D @types/react-datepicker
+    ```
+    *   **思想:**
+        *   `react-hook-form`: フォームの再レンダリングを最小限に抑え、パフォーマンスを向上させます。バリデーションルールを簡単に定義できます。
+        *   `react-datepicker`: 日時入力のUI/UXを向上させます。
+
+2.  **私的補講登録フォームコンポーネントの作成 (`frontend/src/components/SupplementaryLectureForm.tsx`)**
+    *   `frontend/src/components/`内に`SupplementaryLectureForm.tsx`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/SupplementaryLectureForm.tsx
+
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css'; // スタイルシートをインポート
+import { useNavigate } from 'react-router-dom';
+import { fetcher } from '../lib/api';
+import type { OfficialLecture } from '../types/officialLecture'; // 後で作成する型定義
+
+// フォームデータの型定義
+interface SupplementaryLectureFormData {
+  officialLectureId: number;
+  location: string;
+  startTime: Date;
+  endTime: Date;
+  description?: string;
+}
+
+export const SupplementaryLectureForm = () => {
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<SupplementaryLectureFormData>();
+  const navigate = useNavigate();
+
+  // 公式講義リストの取得
+  const { data: officialLectures, error: officialLecturesError } = useSWR<OfficialLecture[]>('/api/official-lectures', fetcher);
+
+  const [startDate, endDate] = watch(['startTime', 'endTime']); // DatePickerの制御用
+
+  useEffect(() => {
+    register('startTime', { required: '開始時間は必須です' });
+    register('endTime', { required: '終了時間は必須です' });
+  }, [register]);
+
+  const onSubmit = async (data: SupplementaryLectureFormData) => {
+    try {
+      // 日時をISO文字列に変換して送信
+      const payload = {
+        ...data,
+        startTime: data.startTime.toISOString(),
+        endTime: data.endTime.toISOString(),
+      };
+      
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/supplementary-lectures`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to create supplementary lecture');
+      }
+
+      navigate('/'); // 登録成功後、カレンダーページへリダイレクト
+    } catch (error) {
+      console.error('Error creating supplementary lecture:', error);
+      alert('補講の登録に失敗しました。');
+    }
+  };
+
+  if (officialLecturesError) return <div>公式講義の読み込みに失敗しました。</div>;
+  if (!officialLectures) return <div>公式講義を読み込み中...</div>;
+
+  return (
+    <div className="supplementary-lecture-form">
+      <h2>私的補講 登録</h2>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <label>関連講義:</label>
+          <select {...register('officialLectureId', { required: '関連講義は必須です' })}> 
+            <option value="">選択してください</option>
+            {officialLectures.map(lecture => (
+              <option key={lecture.id} value={lecture.id}>
+                {lecture.name} ({lecture.professor})
+              </option>
+            ))}
+          </select>
+          {errors.officialLectureId && <p className="error-message">{errors.officialLectureId.message}</p>}
+        </div>
+
+        <div>
+          <label>場所:</label>
+          <input type="text" {...register('location', { required: '場所は必須です' })} />
+          {errors.location && <p className="error-message">{errors.location.message}</p>}
+        </div>
+
+        <div>
+          <label>開始日時:</label>
+          <DatePicker
+            selected={startDate}
+            onChange={(date: Date) => setValue('startTime', date)}
+            showTimeSelect
+            dateFormat="yyyy/MM/dd HH:mm"
+            timeFormat="HH:mm"
+            timeIntervals={15}
+            placeholderText="開始日時を選択"
+          />
+          {errors.startTime && <p className="error-message">{errors.startTime.message}</p>}
+        </div>
+
+        <div>
+          <label>終了日時:</label>
+          <DatePicker
+            selected={endDate}
+            onChange={(date: Date) => setValue('endTime', date)}
+            showTimeSelect
+            dateFormat="yyyy/MM/dd HH:mm"
+            timeFormat="HH:mm"
+            timeIntervals={15}
+            placeholderText="終了日時を選択"
+            minDate={startDate} // 開始日時より前の日付は選択不可
+          />
+          {errors.endTime && <p className="error-message">{errors.endTime.message}</p>}
+        </div>
+
+        <div>
+          <label>内容 (任意):</label>
+          <textarea {...register('description')} />
+        </div>
+
+        <button type="submit">登録</button>
+      </form>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **`useForm`:** フォームの状態管理、入力値の取得、バリデーションを`react-hook-form`に任せることで、コード量を減らし、パフォーマンスを最適化します。
+    *   **`DatePicker`:** 日時入力のUIを改善し、ユーザーフレンドリーにします。`minDate`プロパティで終了日時が開始日時より前にならないように制御します。
+    *   **API連携:** フォームの送信時に、`fetch`APIを使ってバックエンドの登録APIを呼び出します。
+    *   **リダイレクト:** 登録成功後、`useNavigate`を使ってカレンダーページにリダイレクトし、ユーザーに登録が完了したことを視覚的に伝えます。
+
+#### 補足: `useSWR`のインポートエラーと解決策
+
+`SupplementaryLectureForm.tsx`で`Uncaught ReferenceError: useSWR is not defined`というエラーが発生した場合、これは`useSWR`フックが正しくインポートされていないことを示します。
+
+`howto.md`のコードブロックでは`import useSWR from 'swr';`が記述されていますが、何らかの理由でこのインポートが機能しない場合、以下の点を確認してください。
+
+*   **インポート文の重複:** ファイル内に`import useSWR from 'swr';`が複数回記述されていないか確認し、もしあれば一つだけ残して他を削除してください。
+*   **インポートの順序:** `import useSWR from 'swr';`の行が、ファイルの先頭付近、他の`import`文と一緒に記述されていることを確認してください。
+
+3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)**
+    *   `frontend/src/types/`内に`officialLecture.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/types/officialLecture.ts
+
+export interface OfficialLecture {
+  id: number;
+  name: string;
+  professor: string;
+  dayOfWeek: number;
+  period: number;
+  termId: number;
+}
+```
+
+4.  **`App.tsx`のルーティング設定の拡張:**
+    *   私的補講登録フォームへのルートを追加します。
+
+```typescript
+// frontend/src/App.tsx (既存のRoutesに追加)
+
+import { SupplementaryLectureForm } from './components/SupplementaryLectureForm'; // インポートを追加
+
+// ... (既存のRoutes)
+
+          <Routes>
+            <Route path="/" element={<Calendar />} />
+            <Route path="/lectures/:id" element={<SupplementaryLectureDetail />} />
+            <Route path="/lectures/new" element={<SupplementaryLectureForm />} /> {/* この行を追加 */}
+          </Routes>
+
+// ... (既存のコード)
+```
+
+### Step 3: 公式講義リスト取得APIの作成 (`backend/src/routes/officialLectures.ts`)
+
+私的補講登録フォームで公式講義を選択できるように、公式講義のリストを返すAPIをバックエンドに実装します。
+
+1.  `backend/src/routes/`内に`officialLectures.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/officialLectures.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/official-lectures - 全ての公式講義リストを取得
+router.get('/', async (req, res) => {
+  try {
+    const lectures = await prisma.officialLecture.findMany({
+      orderBy: {
+        name: 'asc', // 名前順でソート
+      },
+    });
+    res.json(lectures);
+  } catch (error) {
+    console.error('Failed to fetch official lectures:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **シンプルさ:** 登録フォームが必要とする最小限のデータ（ID、名前、教授）を返すシンプルなAPIです。
+
+2.  **ルーティングの統合 (`backend/src/index.ts`の拡張)**
+    *   作成した公式講義用ルーターを`index.ts`に組み込みます。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures';
+import officialLectureRouter from './routes/officialLectures'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+
+## テストの実施方法
+
+### 2.3.1. 詳細閲覧機能のテスト
+
+1.  **テストデータの準備:**
+    *   データベースに、表示したい私的補講のテストデータ（`SupplementaryLecture`テーブル）が投入されていることを確認します。
+    *   `OfficialLecture`テーブルにも関連するデータが必要です。
+    *   `howto.md`の「2.2.2. バックエンド側の実装」のテストデータ投入例を参考にしてください。
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、一時的な認証バイパスが有効になっていることを確認してください。
+
+3.  **テストの実施:**
+    *   ブラウザで`http://localhost:5173`にアクセスし、カレンダーが表示されることを確認します。
+    *   カレンダー上の私的補講イベント（`className: 'event-supplementary'`）をクリックします。
+    *   **想定される結果:**
+        *   URLが`/lectures/<補講ID>`に変わり、私的補講の詳細情報が表示されること。
+        *   表示される情報がデータベースのデータと一致していること。
+        *   開発者ツールのネットワークタブで、`/api/supplementary-lectures/<ID>`へのリクエストが`200 OK`で成功していること。
+
+### 2.3.2. 登録機能のテスト
+
+1.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、一時的な認証バイパスが有効になっていることを確認してください。
+
+2.  **テストの実施:**
+    *   ブラウザで`http://localhost:5173/lectures/new`にアクセスします。
+    *   **想定される結果:**
+        *   私的補講登録フォームが表示されること。
+        *   「関連講義」のプルダウンに、データベースに登録されている公式講義のリストが表示されること。
+        *   フォームに必要事項を入力し、「登録」ボタンをクリックします。
+        *   入力値のバリデーションが正しく機能すること（例: 必須項目が空の場合にエラーメッセージが表示される）。
+        *   登録成功後、カレンダーページ（`/`）にリダイレクトされること。
+        *   開発者ツールのネットワークタブで、`POST /api/supplementary-lectures`へのリクエストが`201 Created`で成功していること。
+        *   データベースの`SupplementaryLecture`テーブルに新しいレコードが追加されていること（DBeaverなどで確認）。
+        *   カレンダーを再表示すると、新しく登録した補講がカレンダーに表示されること。
