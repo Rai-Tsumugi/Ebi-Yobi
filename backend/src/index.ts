@@ -32,14 +32,18 @@ app.use(express.json());
 // --- ルーティングの設定 ---
 import { iapAuthMiddleware } from './middleware/auth';
 import userRouter from './routes/user';
-import eventRouter from './routes/events'; // インポートを追加
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures';
+import officialLectureRouter from './routes/officialLectures'; // インポートを追加
 
 // ... (他の設定)
 
 // --- ルーティングの設定 ---
 
 app.use('/api/users', iapAuthMiddleware, userRouter);
-app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter); // この行を追加
 
 
 
