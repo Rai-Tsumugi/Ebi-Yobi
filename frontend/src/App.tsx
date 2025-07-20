@@ -2,9 +2,9 @@ import { useUser } from './hooks/useUser';
 import { ProfileModal } from './components/ProfileModal';
 import { Calendar } from './components/Calendar';
 import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'; // インポートを追加
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SupplementaryLectureDetail } from './components/SupplementaryLectureDetail';
-import { SupplementaryLectureForm } from './components/SupplementaryLectureForm'; // この行が正しく追加されているか確認
+import { SupplementaryLectureForm } from './components/SupplementaryLectureForm';
 
 function App() {
   const { user, isLoading, isError, displayName } = useUser();
@@ -18,7 +18,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter> {/* BrowserRouterでアプリケーションをラップ */}
+    <BrowserRouter>
       <ProfileModal />
       
       <div className={user && !user.name ? 'content-blurred' : ''}>
@@ -30,7 +30,7 @@ function App() {
           <Routes> 
             <Route path="/" element={<Calendar />} /> 
             <Route path="/lectures/:id" element={<SupplementaryLectureDetail />} /> 
-            <Route path="/lectures/new" element={<SupplementaryLectureForm />} /> {/* この行を追加 */}
+            <Route path="/lectures/new" element={<SupplementaryLectureForm />} />
           </Routes>
         </main>
       </div>
