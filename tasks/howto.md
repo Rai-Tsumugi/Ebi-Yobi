@@ -5,7 +5,7 @@
 ## 1. ブランチの作成と保護設定
 
 ### a. `develop` ブランチの作成
-以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジリにプッシュします。
+以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジトリにプッシュします。
 （この手順は実行済みです）
 ```bash
 git branch develop
@@ -15,7 +15,7 @@ git push origin develop
 ### b. ブランチの保護設定 (手動設定)
 `main` ブランチと `develop` ブランチに意図しないコミットが行われるのを防ぐため、保護ルールを設定します。
 
-1.  GitHubリポジリのページにアクセスします。
+1.  GitHubリポジトリのページにアクセスします。
 2.  `Settings` タブ > `Branches` メニューを選択します。
 3.  `Add branch protection rule` をクリックします。
 4.  **`main` ブランチの保護ルール:**
@@ -52,7 +52,7 @@ git push origin develop
 
 `issuse.md`で定義されているラベルをGitHubに設定し、Issueの分類を容易にします。
 
-1.  GitHubリポジリの `Issues` タブ > `Labels` メニューを選択します。
+1.  GitHubリポジトリの `Issues` タブ > `Labels` メニューを選択します。
 2.  `New label` ボタンをクリックし、以下のラベルを一つずつ作成します。
 
 ### 種別 (Type)
@@ -94,12 +94,12 @@ git push origin develop
 
 # Issue #1: プロジェクト管理システムのセットアップ手順
 
-このドキュメントは、GitHubリポジリの初期設定を行うための手順書です。
+このドキュメントは、GitHubリポジトリの初期設定を行うための手順書です。
 
 ## 1. ブランチの作成と保護設定
 
 ### a. `develop` ブランチの作成
-以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジリにプッシュします。
+以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジトリにプッシュします。
 （この手順は実行済みです）
 ```bash
 git branch develop
@@ -109,7 +109,7 @@ git push origin develop
 ### b. ブランチの保護設定 (手動設定)
 `main` ブランチと `develop` ブランチに意図しないコミットが行われるのを防ぐため、保護ルールを設定します。
 
-1.  GitHubリポジリのページにアクセスします。
+1.  GitHubリポジトリのページにアクセスします。
 2.  `Settings` タブ > `Branches` メニューを選択します。
 3.  `Add branch protection rule` をクリックします。
 4.  **`main` ブランチの保護ルール:**
@@ -1433,7 +1433,7 @@ app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
 2.  **想定される結果:**
     *   認証が成功し、名前入力モーダルが表示（または既に登録済みの場合はヘッダーに名前が表示）されます。
     *   カレンダーUI上に、**準備段階で投入したテストデータがイベントとして表示されていること**を確認します。
-    *   ブラウザの開発者ツール（F12）の「ネットワーク」タブで、`/api/events?...`へのリクエストのステータスコードが`200 OK`になり、レスポンスとしてイベント情報のJSON配列が返ってきていることを確認します。
+    *   ブラウザの開発者ツール（F12）の「ネットワーク」タブで、`/api/events?...`へのリクエストが`200 OK`になり、レスポンスとしてイベント情報のJSON配列が返ってきていることを確認します。
 
 **方法B: APIクライアントツールを使った単体テスト**
 
@@ -2087,3 +2087,312 @@ app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter); // 
         *   開発者ツールのネットワークタブで、`POST /api/supplementary-lectures`へのリクエストが`201 Created`で成功していること。
         *   データベースの`SupplementaryLecture`テーブルに新しいレコードが追加されていること（DBeaverなどで確認）。
         *   カレンダーを再表示すると、新しく登録した補講がカレンダーに表示されること。
+
+#### トラブルシューティング
+
+- **登録時に`500 Internal Server Error`が発生する場合:**
+  - **原因:** バックエンドのターミナルに`Unique constraint failed on the fields: (id)`というエラーが表示されている場合、データベースの自動採番IDが、手動で投入したテストデータのIDと重複している可能性があります。
+  - **解決策:** 以下のSQLクエリをデータベースクライアントで実行し、IDのシーケンスをリセットしてください。
+    ```sql
+    SELECT setval(pg_get_serial_sequence('"SupplementaryLecture"', 'id'), (SELECT MAX(id) FROM "SupplementaryLecture"));
+    ```
+
+# Issue #8: 私的補講への出席登録機能の実装
+
+このセクションでは、`issuse.md`の「2.4. 私的補講への出席登録機能の実装」に基づき、ユーザーが私的補講への出席登録およびキャンセルを行えるようにする機能の実装手順を詳述します。
+
+## 2.4.1. バックエンド側の実装
+
+まず、出席登録・キャンセルのためのAPIと、詳細ページでユーザー自身の出席状況を返すためのAPI拡張を実装します。
+
+### Step 1: 出席登録APIの実装 (`backend/src/routes/supplementaryLectures.ts`の拡張)
+
+`POST /api/supplementary-lectures/:id/attendees`エンドポイントを実装します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts (既存のコードに追加)
+
+// ... (既存のimport文、router, prismaの定義)
+
+// POST /api/supplementary-lectures/:id/attendees - 私的補講への出席登録
+router.post('/:id/attendees', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const lectureId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に出席済みでないか、自分の補講でないかなどをチェック
+    const existingAttendance = await prisma.supplementaryLectureAttendance.findUnique({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    if (existingAttendance) {
+      return res.status(409).json({ error: 'Already attending' }); // 409 Conflict
+    }
+
+    const lecture = await prisma.supplementaryLecture.findUnique({ where: { id: lectureId } });
+    if (lecture?.creatorId === userId) {
+      return res.status(400).json({ error: 'Cannot attend your own lecture' });
+    }
+
+    // 出席情報を登録
+    await prisma.supplementaryLectureAttendance.create({
+      data: {
+        userId,
+        supplementaryLectureId: lectureId,
+      },
+    });
+
+    res.status(201).send(); // 201 Created
+
+  } catch (error) {
+    console.error('Failed to attend supplementary lecture:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// ... (既存のコード)
+```
+*   **思想:**
+    *   **RESTful API:** `/api/supplementary-lectures/:id/attendees`というエンドポイントは、「特定の私的補講（`:id`）の出席者（`attendees`）を一人追加する」という操作を直感的に表現しています。
+    *   **冪等性（べきとうせい）の考慮:** 既に出席済みのユーザーが再度リクエストを送ってきた場合に、`409 Conflict`エラーを返すことで、同じ操作を何度行っても結果が変わらないようにしています。
+    *   **ビジネスロジックの検証:** 自分の開催する補講には出席できない、というルールをサーバーサイドで検証することで、データの整合性を保ちます。
+
+### Step 2: 出席キャンセルAPIの実装 (`backend/src/routes/supplementaryLectures.ts`の拡張)
+
+`DELETE /api/supplementary-lectures/:id/attendees`エンドポイントを実装します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts (既存のコードに追加)
+
+// ... (既存のコード)
+
+// DELETE /api/supplementary-lectures/:id/attendees - 私的補講への出席キャンセル
+router.delete('/:id/attendees', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const lectureId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 削除対象のレコードが存在するか確認
+    const existingAttendance = await prisma.supplementaryLectureAttendance.findUnique({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    if (!existingAttendance) {
+      return res.status(404).json({ error: 'Not attending this lecture' });
+    }
+
+    // 出席情報を削除
+    await prisma.supplementaryLectureAttendance.delete({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    res.status(204).send(); // 204 No Content
+
+  } catch (error) {
+    console.error('Failed to cancel attendance:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// ... (既存のコード)
+```
+*   **思想:**
+    *   **HTTPメソッドの適切な使用:** リソースの削除には`DELETE`メソッドを使用します。
+    *   **成功時のレスポンス:** 削除が成功し、返すコンテンツがない場合には`204 No Content`ステータスコードを返すのが一般的です。
+
+### Step 3: 詳細情報取得APIの拡張 (`backend/src/routes/supplementaryLectures.ts`の修正)
+
+`GET /api/supplementary-lectures/:id`のレスポンスに、ログインユーザーが出席済みかどうかのフラグ`isAttending`を追加します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts の GET /:id ハンドラを修正
+
+router.get('/:id', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  // ... (既存のIDチェック)
+
+  try {
+    // ... (既存のlecture取得)
+
+    // レスポンス形式をissuse.mdに合わせて整形
+    const response = {
+      // ... (既存のプロパティ)
+      attendeeCount: lecture.attendees.length,
+      isAttending: lecture.attendees.some(attendee => attendee.userId === req.user?.id), // この行を追加
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    // ...
+  }
+});
+```
+*   **思想:**
+    *   **APIの効率化:** フロントエンドが「詳細情報」と「ユーザーの出席状況」を別々のAPIで問い合わせるのではなく、一度のリクエストで必要な情報をすべて取得できるようにします。これにより、APIの呼び出し回数が減り、パフォーマンスが向上します。
+    *   **`some`メソッドの活用:** `attendees`配列にログインユーザーのIDが含まれているかを`some`メソッドで効率的にチェックします。
+
+## 2.4.2. フロントエンド側の実装
+
+バックエンドのAPI拡張に合わせて、フロントエンドの私的補講詳細ページに出席登録・キャンセルボタンを追加し、その状態を管理します。
+
+### Step 1: APIクライアントの拡張 (`frontend/src/lib/api.ts`)
+
+出席登録・キャンセルのためのAPI呼び出し関数を`api.ts`に追加します。
+
+```typescript
+// frontend/src/lib/api.ts (既存のコードに追加)
+
+// ... (既存のコード)
+
+// 出席登録API
+export const attendLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'POST',
+  });
+};
+
+// 出席キャンセルAPI
+export const cancelAttendance = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'DELETE',
+  });
+};
+```
+*   **思想:**
+    *   API呼び出しのロジックをコンポーネントから分離し、`api.ts`に集約することで、コードの再利用性と見通しを良くします。
+
+### Step 2: 詳細ページのUIとロジックの実装 (`frontend/src/components/SupplementaryLectureDetail.tsx`の修正)
+
+出席登録・キャンセルボタンと、それらのボタンクリック時の処理を実装します。ここでは、ユーザー体験を向上させるために**楽観的UI更新**というテクニックを用います。
+
+```typescript
+// frontend/src/components/SupplementaryLectureDetail.tsx (既存のコードを修正)
+
+// ... (既存のimport文)
+import { attendLecture, cancelAttendance } from '../lib/api'; // API関数をインポート
+import { useUser } from '../hooks/useUser'; // ログインユーザー情報を取得するためにインポート
+
+// ... (既存の型定義)
+interface SupplementaryLectureDetailData {
+  // ...
+  isAttending: boolean; // isAttendingプロパティを追加
+}
+
+export const SupplementaryLectureDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { user: loginUser } = useUser(); // ログインユーザー情報を取得
+
+  // SWRのキーを動的に設定
+  const swrKey = id ? `/api/supplementary-lectures/${id}` : null;
+  const { data, error, isLoading, mutate } = useSWR<SupplementaryLectureDetailData>(swrKey, fetcher);
+
+  const handleAttend = async () => {
+    if (!data) return;
+
+    // 楽観的UI更新: UIを即座に変更
+    mutate({ ...data, isAttending: true, attendeeCount: data.attendeeCount + 1 }, false);
+
+    try {
+      await attendLecture(data.id);
+      // サーバーからの最新情報で再検証
+      mutate();
+    } catch (err) {
+      // エラーが発生したらUIを元に戻す
+      mutate({ ...data, isAttending: false, attendeeCount: data.attendeeCount }, false);
+      alert('出席登録に失敗しました。');
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!data) return;
+
+    // 楽観的UI更新: UIを即座に変更
+    mutate({ ...data, isAttending: false, attendeeCount: data.attendeeCount - 1 }, false);
+
+    try {
+      await cancelAttendance(data.id);
+      // サーバーからの最新情報で再検証
+      mutate();
+    } catch (err) {
+      // エラーが発生したらUIを元に戻す
+      mutate({ ...data, isAttending: true, attendeeCount: data.attendeeCount }, false);
+      alert('出席のキャンセルに失敗しました。');
+    }
+  };
+
+  // ... (既存のローディング・エラー表示)
+
+  // 開催者は出席ボタンを表示しない
+  const isCreator = loginUser?.id === data.creator.id;
+
+  return (
+    <div className="supplementary-lecture-detail">
+      {/* ... (既存の表示) */}
+      <p><strong>現在の出席者数:</strong> {data.attendeeCount}名</p>
+      
+      {!isCreator && (
+        <div>
+          {data.isAttending ? (
+            <button onClick={handleCancel}>出席をキャンセルする</button>
+          ) : (
+            <button onClick={handleAttend}>出席する</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **楽観的UI更新 (Optimistic UI Update):** ユーザーがボタンをクリックした瞬間に、APIのレスポンスを待たずにUIを即座に更新（出席者数を増減させ、ボタンの表示を切り替える）します。これにより、ユーザーは自分の操作がすぐに反映されたように感じ、アプリケーションの応答性が非常に高く感じられます。
+    *   **ロールバック:** APIリクエストが万が一失敗した場合は、UIを元の状態に戻し、エラーメッセージを表示します。これにより、UIとサーバーの状態の整合性を保ちます。
+    *   **`mutate`関数の活用:** `SWR`の`mutate`関数は、キャッシュされたデータを手動で更新するための強力な機能です。`mutate(newData, false)`のように第二引数に`false`を渡すことで、UIを更新しつつ、その後の自動的な再検証を抑制できます。APIリクエストが成功した後に引数なしで`mutate()`を呼び出すことで、サーバーの最新の状態でデータを再検証し、UIの正確性を保証します。
+    *   **条件付きレンダリング:** ログインユーザーが補講の開催者である場合は、出席・キャンセルボタンを表示しないようにします。
+
+## テストの実施方法
+
+1.  **テストデータの準備:**
+    *   `howto.md`の「2.2.2. バックエンド側の実装」のテストデータ投入例を参考に、`SupplementaryLecture`テーブルにテストデータが投入されていることを確認します。
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、一時的な認証バイパスが有効になっていることを確認してください。
+
+3.  **テストの実施:**
+    *   ブラウザで`http://localhost:5173`にアクセスし、カレンダー上の私的補講イベントをクリックして詳細ページに遷移します。
+    *   **想定される結果（出席前）:**
+        *   「出席する」ボタンが表示されていること。
+        *   現在の出席者数が正しいこと。
+        *   「出席する」ボタンをクリックすると、即座にボタンが「出席をキャンセルする」に変わり、出席者数が1人増えること。
+        *   開発者ツールのネットワークタブで、`POST /api/supplementary-lectures/<ID>/attendees`へのリクエストが`201 Created`で成功していること。
+    *   **想定される結果（出席後）:**
+        *   ページをリロードしても、「出席をキャンセルする」ボタンと、増えた後の出席者数が表示されたままであること。
+        *   「出席をキャンセルする」ボタンをクリックすると、即座にボタンが「出席する」に変わり、出席者数が1人減ること。
+        *   開発者ツールのネットワークタブで、`DELETE /api/supplementary-lectures/<ID>/attendees`へのリクエストが`204 No Content`で成功していること。
+    *   **想定される結果（開催者の場合）:**
+        *   もしログイン中のダミーユーザーがその補講の開催者である場合、出席・キャンセルボタンが表示されないこと。

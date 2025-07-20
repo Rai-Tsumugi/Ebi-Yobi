@@ -44,3 +44,17 @@ export const updateUser = async (name: string): Promise<User> => {
 
   return res.json();
 };
+
+// 出席登録API
+export const attendLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'POST',
+  });
+};
+
+// 出席キャンセルAPI
+export const cancelAttendance = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'DELETE',
+  });
+};

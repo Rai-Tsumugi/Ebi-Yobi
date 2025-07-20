@@ -39,7 +39,7 @@ router.get('/:id', async (req, res) => {
         name: lecture.creator.name || lecture.creator.university_email.split('@')[0],
       },
       attendeeCount: lecture.attendees.length,
-      // TODO: ログインユーザーが出席済みかどうかのフラグ (isAttending) を後で追加
+      isAttending: lecture.attendees.some(attendee => attendee.userId === req.user?.id), // この行を追加
     };
 
     res.json(response);
@@ -81,6 +81,92 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('Failed to create supplementary lecture:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST /api/supplementary-lectures/:id/attendees - 私的補講への出席登録
+router.post('/:id/attendees', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const lectureId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に出席済みでないか、自分の補講でないかなどをチェック
+    const existingAttendance = await prisma.supplementaryLectureAttendance.findUnique({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    if (existingAttendance) {
+      return res.status(409).json({ error: 'Already attending' }); // 409 Conflict
+    }
+
+    const lecture = await prisma.supplementaryLecture.findUnique({ where: { id: lectureId } });
+    if (lecture?.creatorId === userId) {
+      return res.status(400).json({ error: 'Cannot attend your own lecture' });
+    }
+
+    // 出席情報を登録
+    await prisma.supplementaryLectureAttendance.create({
+      data: {
+        userId,
+        supplementaryLectureId: lectureId,
+      },
+    });
+
+    res.status(201).send(); // 201 Created
+
+  } catch (error) {
+    console.error('Failed to attend supplementary lecture:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/supplementary-lectures/:id/attendees - 私的補講への出席キャンセル
+router.delete('/:id/attendees', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const lectureId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 削除対象のレコードが存在するか確認
+    const existingAttendance = await prisma.supplementaryLectureAttendance.findUnique({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    if (!existingAttendance) {
+      return res.status(404).json({ error: 'Not attending this lecture' });
+    }
+
+    // 出席情報を削除
+    await prisma.supplementaryLectureAttendance.delete({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    res.status(204).send(); // 204 No Content
+
+  } catch (error) {
+    console.error('Failed to cancel attendance:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
