@@ -44,3 +44,31 @@ export const updateUser = async (name: string): Promise<User> => {
 
   return res.json();
 };
+
+// 出席登録API
+export const attendLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'POST',
+  });
+};
+
+// 出席キャンセルAPI
+export const cancelAttendance = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'DELETE',
+  });
+};
+
+// 補講開催を希望するAPI
+export const requestLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'POST',
+  });
+};
+
+// 補講開催の希望を取り消すAPI
+export const cancelLectureRequest = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'DELETE',
+  });
+};

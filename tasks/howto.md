@@ -1,6 +1,6 @@
 # Issue #1: プロジェクト管理システムのセットアップ手順
 
-このドキュメントは、GitHubリポジトリの初期設定を行うための手順書です。
+このドキュメントは、GitHubリポジリの初期設定を行うための手順書です。
 
 ## 1. ブランチの作成と保護設定
 
@@ -576,7 +576,7 @@ const port = process.env.PORT || 3001;
 // VercelのプレビューデプロイURLは動的に変わるため、正規表現で許可する
 const allowedOrigins = [
   'http://localhost:5173', // ローカル開発環境
-  /https:\/\/ebiyobi-frontend-.*\.vercel\.app\/, // Vercelのプレビュー環境
+  /https:\/\/ebiyobi-frontend-.*\.vercel\.app\//, // Vercelのプレビュー環境
   // TODO: 本番環境のドメインを追加
 ];
 app.use(cors({
@@ -1433,7 +1433,7 @@ app.use('/api/events', iapAuthMiddleware, eventRouter); // この行を追加
 2.  **想定される結果:**
     *   認証が成功し、名前入力モーダルが表示（または既に登録済みの場合はヘッダーに名前が表示）されます。
     *   カレンダーUI上に、**準備段階で投入したテストデータがイベントとして表示されていること**を確認します。
-    *   ブラウザの開発者ツール（F12）の「ネットワーク」タブで、`/api/events?...`へのリクエストのステータスコードが`200 OK`になり、レスポンスとしてイベント情報のJSON配列が返ってきていることを確認します。
+    *   ブラウザの開発者ツール（F12）の「ネットワーク」タブで、`/api/events?...`へのリクエストが`200 OK`になり、レスポンスとしてイベント情報のJSON配列が返ってきていることを確認します。
 
 **方法B: APIクライアントツールを使った単体テスト**
 
@@ -1846,7 +1846,7 @@ export const SupplementaryLectureForm = () => {
     register('endTime', { required: '終了時間は必須です' });
   }, [register]);
 
-  const onSubmit = async (data: SupplementaryLectureFormData) => {
+  const onSubmit = async (data: FormData) => {
     try {
       // 日時をISO文字列に変換して送信
       const payload = {
@@ -1955,7 +1955,7 @@ export const SupplementaryLectureForm = () => {
 *   **インポート文の重複:** ファイル内に`import useSWR from 'swr';`が複数回記述されていないか確認し、もしあれば一つだけ残して他を削除してください。
 *   **インポートの順序:** `import useSWR from 'swr';`の行が、ファイルの先頭付近、他の`import`文と一緒に記述されていることを確認してください。
 
-3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)**
+3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)
     *   `frontend/src/types/`内に`officialLecture.ts`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
@@ -1994,10 +1994,130 @@ import { SupplementaryLectureForm } from './components/SupplementaryLectureForm'
 
 私的補講登録フォームで公式講義を選択できるように、公式講義のリストを返すAPIをバックエンドに実装します。
 
+**注意:** このAPIは、Issue #10「補講開催希望とランキング機能」の実装において、ユーザーの希望状況と総希望者数も返すように拡張されています。
+
 1.  `backend/src/routes/`内に`officialLectures.ts`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
 // backend/src/routes/officialLectures.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/official-lectures - 全ての公式講義リストを取得
+router.get('/', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const lectures = await prisma.officialLecture.findMany({
+      orderBy: {
+        name: 'asc', // 名前順でソート
+      },
+      include: {
+        requests: true, // 関連するリクエストも取得
+      },
+    });
+
+    const userId = req.user.id; // ログインユーザーのID
+
+    const responseLectures = lectures.map(lecture => {
+      const requestCount = lecture.requests.length;
+      const isRequested = lecture.requests.some(request => request.userId === userId);
+      
+      // 不要なrequestsプロパティを削除して返す
+      const { requests, ...rest } = lecture;
+      return {
+        ...rest,
+        requestCount,
+        isRequested,
+      };
+    });
+
+    res.json(responseLectures);
+  } catch (error) {
+    console.error('Failed to fetch official lectures:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST /api/official-lectures/:id/requests - 補講開催を希望する
+router.post('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に希望済みでないか確認
+    const existingRequest = await prisma.supplementaryLectureRequest.findUnique({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'Already requested' }); // 409 Conflict
+    }
+
+    await prisma.supplementaryLectureRequest.create({
+      data: {
+        userId: req.user.id,
+        officialLectureId,
+      },
+    });
+    res.status(201).send();
+
+  } catch (error) {
+    console.error('Failed to create lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/official-lectures/:id/requests - 補講開催の希望を取り消す
+router.delete('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    await prisma.supplementaryLectureRequest.delete({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+    res.status(204).send();
+
+  } catch (error) {
+    // @ts-ignore
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to delete lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
 
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
@@ -2087,3 +2207,1165 @@ app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter); // 
         *   開発者ツールのネットワークタブで、`POST /api/supplementary-lectures`へのリクエストが`201 Created`で成功していること。
         *   データベースの`SupplementaryLecture`テーブルに新しいレコードが追加されていること（DBeaverなどで確認）。
         *   カレンダーを再表示すると、新しく登録した補講がカレンダーに表示されること。
+
+#### トラブルシューティング
+
+- **登録時に`500 Internal Server Error`が発生する場合:**
+  - **原因:** バックエンドのターミナルに`Unique constraint failed on the fields: (id)`というエラーが表示されている場合、データベースの自動採番IDが、手動で投入したテストデータのIDと重複している可能性があります。
+  - **解決策:** 以下のSQLクエリをデータベースクライアントで実行し、IDのシーケンスをリセットしてください。
+    ```sql
+    SELECT setval(pg_get_serial_sequence('"SupplementaryLecture"', 'id'), (SELECT MAX(id) FROM "SupplementaryLecture"));
+    ```
+
+# Issue #8: 私的補講への出席登録機能の実装
+
+このセクションでは、`issuse.md`の「2.4. 私的補講への出席登録機能の実装」に基づき、ユーザーが私的補講への出席登録およびキャンセルを行えるようにする機能の実装手順を詳述します。
+
+## 2.4.1. バックエンド側の実装
+
+まず、出席登録・キャンセルのためのAPIと、詳細ページでユーザー自身の出席状況を返すためのAPI拡張を実装します。
+
+### Step 1: 出席登録APIの実装 (`backend/src/routes/supplementaryLectures.ts`の拡張)
+
+`POST /api/supplementary-lectures/:id/attendees`エンドポイントを実装します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts (既存のコードに追加)
+
+// ... (既存のimport文、router, prismaの定義)
+
+// POST /api/supplementary-lectures/:id/attendees - 私的補講への出席登録
+router.post('/:id/attendees', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const lectureId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に出席済みでないか、自分の補講でないかなどをチェック
+    const existingAttendance = await prisma.supplementaryLectureAttendance.findUnique({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    if (existingAttendance) {
+      return res.status(409).json({ error: 'Already attending' }); // 409 Conflict
+    }
+
+    const lecture = await prisma.supplementaryLecture.findUnique({ where: { id: lectureId } });
+    if (lecture?.creatorId === userId) {
+      return res.status(400).json({ error: 'Cannot attend your own lecture' });
+    }
+
+    // 出席情報を登録
+    await prisma.supplementaryLectureAttendance.create({
+      data: {
+        userId,
+        supplementaryLectureId: lectureId,
+      },
+    });
+
+    res.status(201).send(); // 201 Created
+
+  } catch (error) {
+    console.error('Failed to attend supplementary lecture:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// ... (既存のコード)
+```
+*   **思想:**
+    *   **RESTful API:** `/api/supplementary-lectures/:id/attendees`というエンドポイントは、「特定の私的補講（`:id`）の出席者（`attendees`）を一人追加する」という操作を直感的に表現しています。
+    *   **冪等性（べきとうせい）の考慮:** 既に出席済みのユーザーが再度リクエストを送ってきた場合に、`409 Conflict`エラーを返すことで、同じ操作を何度行っても結果が変わらないようにしています。
+    *   **ビジネスロジックの検証:** 自分の開催する補講には出席できない、というルールをサーバーサイドで検証することで、データの整合性を保ちます。
+
+### Step 2: 出席キャンセルAPIの実装 (`backend/src/routes/supplementaryLectures.ts`の拡張)
+
+`DELETE /api/supplementary-lectures/:id/attendees`エンドポイントを実装します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts (既存のコードに追加)
+
+// ... (既存のコード)
+
+// DELETE /api/supplementary-lectures/:id/attendees - 私的補講への出席キャンセル
+router.delete('/:id/attendees', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const lectureId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(lectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 削除対象のレコードが存在するか確認
+    const existingAttendance = await prisma.supplementaryLectureAttendance.findUnique({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    if (!existingAttendance) {
+      return res.status(404).json({ error: 'Not attending this lecture' });
+    }
+
+    // 出席情報を削除
+    await prisma.supplementaryLectureAttendance.delete({
+      where: {
+        userId_supplementaryLectureId: { userId, supplementaryLectureId: lectureId },
+      },
+    });
+
+    res.status(204).send(); // 204 No Content
+
+  } catch (error) {
+    // レコードが存在しない場合のエラー(P2025)をハンドリング
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to cancel attendance:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// ... (既存のコード)
+```
+*   **思想:**
+    *   **HTTPメソッドの適切な使用:** リソースの削除には`DELETE`メソッドを使用します。
+    *   **成功時のレスポンス:** 削除が成功し、返すコンテンツがない場合には`204 No Content`ステータスコードを返すのが一般的です。
+
+### Step 3: 詳細情報取得APIの拡張 (`backend/src/routes/supplementaryLectures.ts`の修正)
+
+`GET /api/supplementary-lectures/:id`のレスポンスに、ログインユーザーが出席済みかどうかのフラグ`isAttending`を追加します。
+
+```typescript
+// backend/src/routes/supplementaryLectures.ts の GET /:id ハンドラを修正
+
+router.get('/:id', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  // ... (既存のIDチェック)
+
+  try {
+    // ... (既存のlecture取得)
+
+    // レスポンス形式をissuse.mdに合わせて整形
+    const response = {
+      // ... (既存のプロパティ)
+      attendeeCount: lecture.attendees.length,
+      isAttending: lecture.attendees.some(attendee => attendee.userId === req.user?.id), // この行を追加
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    // ...
+  }
+});
+```
+*   **思想:**
+    *   **APIの効率化:** フロントエンドが「詳細情報」と「ユーザーの出席状況」を別々のAPIで問い合わせるのではなく、一度のリクエストで必要な情報をすべて取得できるようにします。これにより、APIの呼び出し回数が減り、パフォーマンスが向上します。
+    *   **`some`メソッドの活用:** `attendees`配列にログインユーザーのIDが含まれているかを`some`メソッドで効率的にチェックします。
+
+## 2.4.2. フロントエンド側の実装
+
+バックエンドのAPI拡張に合わせて、フロントエンドの私的補講詳細ページに出席登録・キャンセルボタンを追加し、その状態を管理します。
+
+### Step 1: APIクライアントの拡張 (`frontend/src/lib/api.ts`)
+
+出席登録・キャンセルのためのAPI呼び出し関数を`api.ts`に追加します。
+
+```typescript
+// frontend/src/lib/api.ts (既存のコードに追加)
+
+// ... (既存のコード)
+
+// 出席登録API
+export const attendLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'POST',
+  });
+};
+
+// 出席キャンセルAPI
+export const cancelAttendance = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/supplementary-lectures/${lectureId}/attendees`, {
+    method: 'DELETE',
+  });
+};
+```
+*   **思想:**
+    *   API呼び出しのロジックをコンポーネントから分離し、`api.ts`に集約することで、コードの再利用性と見通しを良くします。
+
+### Step 2: 詳細ページのUIとロジックの実装 (`frontend/src/components/SupplementaryLectureDetail.tsx`の修正)
+
+出席登録・キャンセルボタンと、それらのボタンクリック時の処理を実装します。ここでは、ユーザー体験を向上させるために**楽観的UI更新**というテクニックを用います。
+
+```typescript
+// frontend/src/components/SupplementaryLectureDetail.tsx (既存のコードを修正)
+
+// ... (既存のimport文)
+import { attendLecture, cancelAttendance } from '../lib/api'; // API関数をインポート
+import { useUser } from '../hooks/useUser'; // ログインユーザー情報を取得するためにインポート
+
+// ... (既存の型定義)
+interface SupplementaryLectureDetailData {
+  // ...
+  isAttending: boolean; // isAttendingプロパティを追加
+}
+
+export const SupplementaryLectureDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { user: loginUser } = useUser(); // ログインユーザー情報を取得
+
+  // SWRのキーを動的に設定
+  const swrKey = id ? `/api/supplementary-lectures/${id}` : null;
+  const { data, error, isLoading, mutate } = useSWR<SupplementaryLectureDetailData>(swrKey, fetcher);
+
+  const handleAttend = async () => {
+    if (!data) return;
+
+    // 楽観的UI更新: UIを即座に変更
+    mutate({ ...data, isAttending: true, attendeeCount: data.attendeeCount + 1 }, false);
+
+    try {
+      await attendLecture(data.id);
+      // サーバーからの最新情報で再検証
+      mutate();
+    } catch (err) {
+      // エラーが発生したらUIを元に戻す
+      mutate({ ...data, isAttending: false, attendeeCount: data.attendeeCount }, false);
+      alert('出席登録に失敗しました。');
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!data) return;
+
+    // 楽観的UI更新: UIを即座に変更
+    mutate({ ...data, isAttending: false, attendeeCount: data.attendeeCount - 1 }, false);
+
+    try {
+      await cancelAttendance(data.id);
+      // サーバーからの最新情報で再検証
+      mutate();
+    } catch (err) {
+      // エラーが発生したらUIを元に戻す
+      mutate({ ...data, isAttending: true, attendeeCount: data.attendeeCount }, false);
+      alert('出席のキャンセルに失敗しました。');
+    }
+  };
+
+  // ... (既存のローディング・エラー表示)
+
+  // 開催者は出席ボタンを表示しない
+  const isCreator = loginUser?.id === data.creator.id;
+
+  return (
+    <div className="supplementary-lecture-detail">
+      {/* ... (既存の表示) */}
+      <p><strong>現在の出席者数:</strong> {data.attendeeCount}名</p>
+      
+      {!isCreator && (
+        <div>
+          {data.isAttending ? (
+            <button onClick={handleCancel}>出席をキャンセルする</button>
+          ) : (
+            <button onClick={handleAttend}>出席する</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **楽観的UI更新 (Optimistic UI Update):** ユーザーがボタンをクリックした瞬間に、APIのレスポンスを待たずにUIを即座に更新（出席者数を増減させ、ボタンの表示を切り替える）します。これにより、ユーザーは自分の操作がすぐに反映されたように感じ、アプリケーションの応答性が非常に高く感じられます。
+    *   **ロールバック:** APIリクエストが万が一失敗した場合は、UIを元の状態に戻し、エラーメッセージを表示します。これにより、UIとサーバーの状態の整合性を保ちます。
+    *   **`mutate`関数の活用:** `SWR`の`mutate`関数は、キャッシュされたデータを手動で更新するための強力な機能です。`mutate(newData, false)`のように第二引数に`false`を渡すことで、UIを更新しつつ、その後の自動的な再検証を抑制できます。APIリクエストが成功した後に引数なしで`mutate()`を呼び出すことで、サーバーの最新の状態でデータを再検証し、UIの正確性を保証します。
+    *   **条件付きレンダリング:** ログインユーザーが補講の開催者である場合は、出席・キャンセルボタンを表示しないようにします。
+
+## テストの実施方法
+
+1.  **テストデータの準備:**
+    *   `howto.md`の「2.2.2. バックエンド側の実装」のテストデータ投入例を参考に、`SupplementaryLecture`テーブルにテストデータが投入されていることを確認します。
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、一時的な認証バイパスが有効になっていることを確認してください。
+
+3.  **テストの実施:**
+    *   ブラウザで`http://localhost:5173`にアクセスし、カレンダー上の私的補講イベントをクリックして詳細ページに遷移します。
+    *   **想定される結果（出席前）:**
+        *   「出席する」ボタンが表示されていること。
+        *   現在の出席者数が正しいこと。
+        *   「出席する」ボタンをクリックすると、即座にボタンが「出席をキャンセルする」に変わり、出席者数が1人増えること。
+        *   開発者ツールのネットワークタブで、`POST /api/supplementary-lectures/<ID>/attendees`へのリクエストが`201 Created`で成功していること。
+    *   **想定される結果（出席後）:**
+        *   ページをリロードしても、「出席をキャンセルする」ボタンと、増えた後の出席者数が表示されたままであること。
+        *   「出席をキャンセルする」ボタンをクリックすると、即座にボタンが「出席する」に変わり、出席者数が1人減ること。
+        *   開発者ツールのネットワークタブで、`DELETE /api/supplementary-lectures/<ID>/attendees`へのリクエストが`204 No Content`で成功していること。
+    *   **想定される結果（開催者の場合）:**
+        *   もしログイン中のダミーユーザーがその補講の開催者である場合、出席・キャンセルボタンが表示されないこと。
+
+---
+
+# Issue #9: 個人予定のCRUD機能の実装
+
+このセクションでは、`issuse.md`の「3.1.1. 個人予定のCRUD機能」に基づき、ユーザーが自身のプライベートな予定をカレンダー上で作成、編集、削除できる機能をモーダルUIで実装する手順を詳述します。
+
+## 3.1.1. バックエンド側の実装 (CRUD API)
+
+まず、個人予定を操作するためのAPIエンドポイントをバックエンドに実装します。
+
+### Step 1: 個人予定用ルーターの作成 (`backend/src/routes/personalEvents.ts`)
+
+1.  `backend/src/routes/`内に`personalEvents.ts`ファイルを作成し、以下の内容を記述します。
+
+    ```typescript
+    // backend/src/routes/personalEvents.ts
+
+    import { Router } from 'express';
+    import { PrismaClient } from '@prisma/client';
+
+    const router = Router();
+    const prisma = new PrismaClient();
+
+    // POST /api/personal-events - 新しい個人予定を作成
+    router.post('/', async (req, res) => {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { title, startTime, endTime, description } = req.body;
+
+      // バリデーション
+      if (!title || !startTime || !endTime) {
+        return res.status(400).json({ error: 'Title, startTime, and endTime are required.' });
+      }
+      if (new Date(startTime) >= new Date(endTime)) {
+        return res.status(400).json({ error: 'End time must be after start time.' });
+      }
+
+      try {
+        const newEvent = await prisma.personalEvent.create({
+          data: {
+            title,
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+            description,
+            userId: req.user.id, // ログインユーザーのIDを紐付ける
+          },
+        });
+        res.status(201).json(newEvent);
+      } catch (error) {
+        console.error('Failed to create personal event:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    // PUT /api/personal-events/:id - 個人予定を更新
+    router.put('/:id', async (req, res) => {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const eventId = parseInt(req.params.id, 10);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ error: 'Invalid event ID.' });
+      }
+
+      const { title, startTime, endTime, description } = req.body;
+
+      // バリデーション
+      if (!title || !startTime || !endTime) {
+        return res.status(400).json({ error: 'Title, startTime, and endTime are required.' });
+      }
+      if (new Date(startTime) >= new Date(endTime)) {
+        return res.status(400).json({ error: 'End time must be after start time.' });
+      }
+
+      try {
+        // 認可: 操作対象のイベントが本当にログインユーザーのものか確認
+        const existingEvent = await prisma.personalEvent.findUnique({
+          where: { id: eventId },
+        });
+
+        if (!existingEvent) {
+          return res.status(404).json({ error: 'Event not found.' });
+        }
+        if (existingEvent.userId !== req.user.id) {
+          return res.status(403).json({ error: 'Forbidden: You do not have permission to edit this event.' });
+        }
+
+        const updatedEvent = await prisma.personalEvent.update({
+          where: { id: eventId },
+          data: {
+            title,
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+            description,
+          },
+        });
+        res.json(updatedEvent);
+      } catch (error) {
+        console.error('Failed to update personal event:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    // DELETE /api/personal-events/:id - 個人予定を削除
+    router.delete('/:id', async (req, res) => {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const eventId = parseInt(req.params.id, 10);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ error: 'Invalid event ID.' });
+      }
+
+      try {
+        // 認可: 操作対象のイベントが本当にログインユーザーのものか確認
+        const existingEvent = await prisma.personalEvent.findUnique({
+          where: { id: eventId },
+        });
+
+        if (!existingEvent) {
+          return res.status(404).json({ error: 'Event not found.' });
+        }
+        if (existingEvent.userId !== req.user.id) {
+          return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this event.' });
+        }
+
+        await prisma.personalEvent.delete({
+          where: { id: eventId },
+        });
+        res.status(204).send(); // No Content
+      } catch (error) {
+        console.error('Failed to delete personal event:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    export default router;
+    ```
+*   **設計思想:**
+    *   **RESTful API:** `POST`, `PUT`, `DELETE` メソッドを使い、リソース（個人予定）に対するCRUD操作を表現します。
+    *   **認可 (Authorization):** 各APIの冒頭で、`req.user`の存在を確認し、認証されていないリクエストを拒否します。さらに、更新・削除処理の前には、操作対象の予定がログインユーザー自身のものであるかをデータベースで検証し、他人の予定を操作できないようにします。これはセキュリティ上非常に重要です。
+    *   **入力バリデーション:** リクエストボディの内容を検証し、不正なデータ（例: 終了日時が開始日時より前）が登録されるのを防ぎます。
+    *   **適切なHTTPステータスコード:** 処理結果に応じて、`201 Created`, `204 No Content`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found` などを使い分け、クライアント側がAPIの応答を正しく解釈できるようにします。
+
+### Step 2: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した個人予定用ルーターを`index.ts`に組み込み、認証ミドルウェアを適用します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures';
+import personalEventRouter from './routes/personalEvents'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **設計思想:**
+    *   `/api/personal-events` というパスに個人予定関連のAPIを集約し、`iapAuthMiddleware`を適用することで、この機能全体に認証を必須とします。
+
+## 3.1.2. フロントエンド側の実装 (モーダルとフォーム)
+
+次に、ユーザーが直感的に操作できるモーダルUIをフロントエンドに実装します。
+
+### Step 1: 依存関係のインストール
+
+アクセシブルなモーダルUIを構築するために、`Headless UI`をインストールします。
+
+```bash
+# frontend ディレクトリで実行
+npm install @headlessui/react
+```
+*   **設計思想:**
+    *   `Headless UI`は、スタイルを持たないUIコンポーネントのロジック（開閉状態、キーボード操作、アクセシビリティ属性など）を提供します。これにより、開発者はコンポーネントの見た目を自由にカスタマイズしながら、アクセシビリティの高いUIを容易に構築できます。
+
+### Step 2: 個人予定モーダルコンポーネントの作成 (`frontend/src/components/PersonalEventModal.tsx`)
+
+個人予定の作成・編集・削除を行うためのモーダルコンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`PersonalEventModal.tsx`ファイルを作成し、以下の内容を記述します。
+
+    ```typescript
+    // frontend/src/components/PersonalEventModal.tsx
+
+    import React, { useState, useEffect } from 'react';
+    import { useForm } from 'react-hook-form';
+    import DatePicker from 'react-datepicker';
+    import 'react-datepicker/dist/react-datepicker.css';
+    import { Dialog } from '@headlessui/react';
+
+    // FullCalendarのイベントオブジェクトの型（仮）
+    interface EventInfo {
+      id: string;
+      title: string;
+      start: Date;
+      end: Date;
+      extendedProps: {
+        description?: string;
+      };
+    }
+
+    interface PersonalEventModalProps {
+      isOpen: boolean;
+      onClose: () => void;
+      onSave: () => void; // 保存成功時にカレンダーを再描画するためのコールバック
+      eventInfo: EventInfo | null; // 編集対象のイベント情報（新規作成時はnull）
+    }
+
+    interface FormData {
+      title: string;
+      startTime: Date;
+      endTime: Date;
+      description?: string;
+    }
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    export const PersonalEventModal = ({ isOpen, onClose, onSave, eventInfo }: PersonalEventModalProps) => {
+      const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>();
+      const [isSubmitting, setIsSubmitting] = useState(false);
+
+      const startTime = watch('startTime');
+
+      useEffect(() => {
+        // モーダルが開かれたときにフォームを初期化
+        if (isOpen) {
+          const initialData = {
+            title: eventInfo?.title || '',
+            startTime: eventInfo?.start || new Date(),
+            endTime: eventInfo?.end || new Date(new Date().getTime() + 60 * 60 * 1000), // デフォルトは1時間後
+            description: eventInfo?.extendedProps.description || '',
+          };
+          reset(initialData);
+        }
+      }, [isOpen, eventInfo, reset]);
+
+      const onSubmit = async (data: FormData) => {
+        setIsSubmitting(true);
+        const eventId = eventInfo ? eventInfo.id.replace('per-', '') : null;
+        const url = eventId ? `${API_BASE_URL}/api/personal-events/${eventId}` : `${API_BASE_URL}/api/personal-events`;
+        const method = eventId ? 'PUT' : 'POST';
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...data,
+              startTime: data.startTime.toISOString(),
+              endTime: data.endTime.toISOString(),
+            }),
+          });
+          if (!res.ok) throw new Error('Failed to save event');
+          onSave(); // 成功を親に通知
+          onClose();
+        } catch (error) {
+          console.error(error);
+          alert('保存に失敗しました。');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+
+      const handleDelete = async () => {
+        if (!eventInfo) return;
+        if (!confirm('この予定を削除しますか？')) return;
+
+        setIsSubmitting(true);
+        const eventId = eventInfo.id.replace('per-', '');
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/personal-events/${eventId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Failed to delete event');
+          onSave();
+          onClose();
+        } catch (error) {
+          console.error(error);
+          alert('削除に失敗しました。');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+
+      return (
+        <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+          {/* ... Headless UIの定型コード (Overlay) ... */}
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md rounded bg-white p-6">
+              <Dialog.Title className="text-lg font-bold">
+                {eventInfo ? '予定の編集' : '予定の追加'}
+              </Dialog.Title>
+              
+              <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+                {/* ... フォーム要素 (title, startTime, endTime, description) ... */}
+                <button type="submit" disabled={isSubmitting}>{isSubmitting ? '保存中...' : '保存'}</button>
+                {eventInfo && (
+                  <button type="button" onClick={handleDelete} disabled={isSubmitting} className="text-red-500">
+                    削除
+                  </button>
+                )}
+              </form>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      );
+    };
+    ```
+*   **設計思想:**
+    *   **再利用可能なコンポーネント:** `PersonalEventModal`は、`eventInfo`プロパティを受け取ることで、**新規作成**と**編集**の両方のシナリオに対応できます。`eventInfo`が`null`なら新規作成モード、そうでなければ編集モードとして動作します。
+    *   **状態管理の分離:** モーダルの開閉状態（`isOpen`）は親コンポーネント（`Calendar.tsx`）が管理します。これにより、モーダル自身はフォームのロジックに集中でき、親はモーダルを制御しやすくなります。
+    *   **コールバックによる通知:** `onSave`コールバックを介して、API操作の成功を親コンポーネントに通知します。これにより、親コンポーネントはカレンダーの表示を更新するなどの後処理を実行できます。
+    *   **`useEffect`によるフォームの初期化:** `isOpen`フラグをトリガーとして`useEffect`内で`reset`関数を呼び出すことで、モーダルが表示されるたびにフォームの内容が正しく初期化されることを保証します。
+
+### Step 3: カレンダーコンポーネントとの連携 (`frontend/src/components/Calendar.tsx`)
+
+カレンダー上での操作（日付クリック、イベントクリック）に応じて、作成したモーダルを開くように`Calendar.tsx`を修正します。
+
+```typescript
+// frontend/src/components/Calendar.tsx (既存のコードを拡張)
+
+import React, { useState, useCallback } from 'react'; // useState, useCallbackをインポート
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction'; // DateClickArgをインポート
+import { useNavigate } from 'react-router-dom';
+import { PersonalEventModal } from './PersonalEventModal'; // モーダルをインポート
+import { EventClickArg } from '@fullcalendar/core'; // EventClickArgをインポート
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const Calendar = () => {
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const calendarRef = React.useRef<FullCalendar>(null);
+
+  const handleDateClick = useCallback((arg: DateClickArg) => {
+    // 日付クリックで新規作成モーダルを開く
+    setSelectedEvent({ start: arg.date, end: arg.date });
+    setIsModalOpen(true);
+  }, []);
+
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+    const type = clickInfo.event.extendedProps.type;
+    if (type === 'supplementary') {
+      navigate(`/lectures/${clickInfo.event.id.replace('sup-', '')}`);
+    } else if (type === 'personal') {
+      // 個人予定クリックで編集モーダルを開く
+      setSelectedEvent(clickInfo.event);
+      setIsModalOpen(true);
+    }
+  }, [navigate]);
+
+  const handleSave = useCallback(() => {
+    // API操作が成功したら、カレンダーのイベントを再取得して表示を更新
+    calendarRef.current?.getApi().refetchEvents();
+  }, []);
+
+  return (
+    <>
+      <PersonalEventModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        eventInfo={selectedEvent}
+      />
+      <FullCalendar
+        ref={calendarRef}
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
+        events={`${API_BASE_URL}/api/events`}
+        eventClick={handleEventClick}
+        dateClick={handleDateClick} // dateClickハンドラを追加
+        // ...
+      />
+    </>
+  );
+};
+```
+*   **設計思想:**
+    *   **状態によるモーダル制御:** `isModalOpen`と`selectedEvent`という2つの`state`でモーダルの表示状態と編集対象のイベント情報を管理します。
+    *   **`dateClick`と`eventClick`:** FullCalendarが提供する2つの異なるイベントハンドラを使い分け、ユーザーのアクション（日付クリックか、イベントクリックか）に応じて適切な処理（新規作成か、編集か）を起動します。
+    *   **`refetchEvents`による表示更新:** API操作が成功した際に、FullCalendarのAPI（`refetchEvents`）を呼び出してイベントデータを再取得します。これにより、ユーザーが行った変更が即座にカレンダーに反映され、UIとデータの一貫性が保たれます。`useCallback`で関数をメモ化し、不要な再レンダリングを防ぎます。
+
+## 3.1.3. 動作確認テスト
+
+ここまでの実装が正しく機能するかを、以下のシナリオでテストします。
+
+1.  **テストの準備:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、一時的な認証バイパスが有効になっていることを確認します。
+
+2.  **テストシナリオ:**
+    *   **新規作成:**
+        1.  カレンダーの任意の日付をクリックします。
+        2.  「予定の追加」モーダルが表示されることを確認します。
+        3.  タイトルと日時を入力し、「保存」ボタンをクリックします。
+        4.  モーダルが閉じ、カレンダー上に新しい個人予定が（`event-personal`クラスの色で）表示されることを確認します。
+        5.  ブラウザの開発者ツールで、`POST /api/personal-events`リクエストが`201 Created`で成功していることを確認します。
+    *   **編集:**
+        1.  先ほど作成した個人予定をクリックします。
+        2.  「予定の編集」モーダルが表示され、先ほど入力した内容がフォームにセットされていることを確認します。
+        3.  タイトルや日時を変更し、「保存」ボタンをクリックします。
+        4.  モーダルが閉じ、カレンダー上の予定が更新されていることを確認します。
+        5.  開発者ツールで、`PUT /api/personal-events/:id`リクエストが`200 OK`で成功していることを確認します。
+    *   **削除:**
+        1.  再度、個人予定をクリックします。
+        2.  「予定の編集」モーダル内の「削除」ボタンをクリックします。
+        3.  確認ダイアログが表示されるので、「OK」をクリックします。
+        4.  モーダルが閉じ、カレンダー上から予定が消えていることを確認します。
+        5.  開発者ツールで、`DELETE /api/personal-events/:id`リクエストが`204 No Content`で成功していることを確認します。
+    *   **認可エラーの確認 (推奨):**
+        1.  データベースを直接操作し、ある個人予定の`userId`を、現在ログインしているダミーユーザーとは別のIDに書き換えます。
+        2.  その予定をUI上でクリックして編集・削除しようとすると、操作が失敗し、コンソールに`403 Forbidden`エラーが表示されることを確認します。
+
+---
+
+
+# Issue #10: 補講開催希望とランキング機能の実装
+
+このセクションでは、`issuse.md`の「3.1.2. 補講開催希望とランキング機能」に基づき、ユーザーが公式講義に対する補講の開催を希望し、その希望者数ランキングを閲覧できる機能を実装する手順を詳述します。
+
+## 3.1.2.1. バックエンド側の実装
+
+### Step 1: APIの設計と実装 (`backend/src/routes/officialLectures.ts`の拡張)
+
+既存の`officialLectures.ts`ルーターに、希望の登録・解除を行うエンドポイントを追加します。
+
+1.  `backend/src/routes/officialLectures.ts`ファイルを開き、以下のエンドポイントを追加します。
+
+```typescript
+// backend/src/routes/officialLectures.ts (既存のコードに追加)
+
+// ... (既存のimport文、router, prismaの定義)
+
+// POST /api/official-lectures/:id/requests - 補講開催を希望する
+router.post('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に希望済みでないか確認
+    const existingRequest = await prisma.supplementaryLectureRequest.findUnique({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'Already requested' }); // 409 Conflict
+    }
+
+    await prisma.supplementaryLectureRequest.create({
+      data: {
+        userId: req.user.id,
+        officialLectureId,
+      },
+    });
+    res.status(201).send();
+
+  } catch (error) {
+    console.error('Failed to create lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/official-lectures/:id/requests - 補講開催の希望を取り消す
+router.delete('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    await prisma.supplementaryLectureRequest.delete({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+    res.status(204).send();
+
+  } catch (error) {
+    // レコードが存在しない場合のエラー(P2025)をハンドリング
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to delete lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+```
+*   **思想:**
+    *   **RESTfulな設計:** 特定の講義 (`/api/official-lectures/:id`) に関連するリソース (`/requests`) としてエンドポイントを設計します。
+    *   **冪等性:** `DELETE` 操作は冪等（何回実行しても結果が同じ）になるように設計します。`POST` は成功すればリソースが作成され、既に存在する場合は `409 Conflict` を返すことで、意図しない重複を防ぎます。
+    *   **具体的なエラーハンドリング:** Prismaがレコードを見つけられなかった場合に投げる `P2025` エラーを捕捉し、クライアントに `404 Not Found` を返すことで、より親切なAPIになります。
+
+### Step 2: ランキング集計APIの作成 (`backend/src/routes/lectureRequests.ts`)
+
+ランキングデータを返すための新しいルーターとエンドポイントを作成します。
+
+1.  `backend/src/routes/`内に`lectureRequests.ts`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/lectureRequests.ts
+
+import { Router } from 'express';
+import { prisma } from '../lib/db';
+
+const router = Router();
+
+// GET /api/lecture-requests/ranking - 補講開催希望のランキングを取得
+router.get('/ranking', async (req, res) => {
+  try {
+    const ranking = await prisma.supplementaryLectureRequest.groupBy({
+      by: ['officialLectureId'],
+      _count: {
+        officialLectureId: true,
+      },
+      orderBy: {
+        _count: {
+          officialLectureId: 'desc',
+        },
+      },
+      take: 10, // 上位10件に絞る
+    });
+
+    // 講義情報を取得してマージ
+    const lectureIds = ranking.map(r => r.officialLectureId);
+    const lectures = await prisma.officialLecture.findMany({
+      where: {
+        id: { in: lectureIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        professor: true,
+      },
+    });
+
+    const lectureMap = new Map(lectures.map(l => [l.id, l]));
+
+    const response = ranking.map(r => ({
+      officialLectureId: r.officialLectureId,
+      requestCount: r._count.officialLectureId,
+      lectureName: lectureMap.get(r.officialLectureId)?.name || '',
+      professor: lectureMap.get(r.officialLectureId)?.professor || '',
+    }));
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Failed to fetch lecture request ranking:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **効率的な集計:** Prismaの `groupBy` 機能を使って、データベース側で効率的に希望数を集計します。これにより、全データを取得してからサーバーサイドで集計するよりもパフォーマンスが向上します。
+    *   **N+1問題の回避:** `IN`句を使って、ランキングに必要な講義情報を一度のクエリでまとめて取得します。これにより、ランキングの件数分だけデータベースへの問い合わせが発生する「N+1問題」を避けることができます。
+    *   **データ整形:** バックエンド側でデータをマージし、フロントエンドがそのまま表示できるような親切な形式でレスポンスを返します。
+
+### Step 3: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した新しいルーターを`index.ts`に組み込みます。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+// ... (既存のimport文)
+import lectureRequestRouter from './routes/lectureRequests'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter);
+app.use('/api/lecture-requests', iapAuthMiddleware, lectureRequestRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+
+## 3.1.2.2. フロントエンド側の実装
+
+### Step 1: 型定義の追加 (`frontend/src/types/`)
+
+ランキングAPIのレスポンスと、公式講義の拡張情報（希望状況）の型を定義します。
+
+1.  `frontend/src/types/`に`lectureRequest.ts`ファイルを新規作成します。
+
+```typescript
+// frontend/src/types/lectureRequest.ts
+
+export interface LectureRequestRanking {
+  officialLectureId: number;
+  requestCount: number;
+  lectureName: string;
+  professor: string;
+}
+```
+
+2.  `frontend/src/types/officialLecture.ts`を修正し、ユーザー自身の希望状況と総希望数を追加します。
+
+```typescript
+// frontend/src/types/officialLecture.ts (修正)
+
+export interface OfficialLecture {
+  id: number;
+  name: string;
+  professor: string;
+  dayOfWeek: number;
+  period: number;
+  termId: number;
+  // 以下を追記
+  isRequested?: boolean; // ログインユーザーが希望済みか
+  requestCount?: number; // 全体の希望者数
+}
+```
+
+### Step 2: APIクライアントの拡張 (`frontend/src/lib/api.ts`)
+
+希望登録・解除を行うためのAPIクライアント関数を追加します。
+
+```typescript
+// frontend/src/lib/api.ts (既存のコードに追加)
+
+// ... (既存のimport文、fetcher, updateUserなど)
+
+// 補講開催を希望するAPI
+export const requestLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'POST',
+  });
+};
+
+// 補講開催の希望を取り消すAPI
+export const cancelLectureRequest = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'DELETE',
+  });
+};
+```
+
+### Step 3: ランキングコンポーネントの作成 (`frontend/src/components/LectureRequestRanking.tsx`)
+
+ランキングを表示するための専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`LectureRequestRanking.tsx`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/LectureRequestRanking.tsx
+
+import React from 'react';
+import useSWR from 'swr';
+import { fetcher } from '../lib/api';
+import type { LectureRequestRanking as RankingData } from '../types/lectureRequest';
+
+export const LectureRequestRanking = () => {
+  const { data: ranking, error } = useSWR<RankingData[]>('/api/lecture-requests/ranking', fetcher, {
+    refreshInterval: 60000, // 60秒ごとに自動更新
+  });
+
+  if (error) return <div>ランキングの読み込みに失敗しました。</div>;
+  if (!ranking) return <div>ランキングを読み込み中...</div>;
+
+  return (
+    <div className="lecture-request-ranking">
+      <h3>補講希望ランキング</h3>
+      <ol>
+        {ranking.map((item, index) => (
+          <li key={item.officialLectureId}>
+            <span>{index + 1}.</span>
+            <div>
+              <p>{item.lectureName} ({item.professor})</p>
+              <p>{item.requestCount}人が希望中</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **コンポーネント化:** ランキング表示のロジックを専用コンポーネントにカプセル化します。
+    *   **自動更新:** `SWR`の`refreshInterval`オプションを使い、ポーリング（定期的なデータ取得）を簡単に実装します。これにより、他のユーザーの希望がUIに自動的に反映されます。
+
+### Step 4: 希望登録ボタンコンポーネントの作成 (`frontend/src/components/RequestButton.tsx`)
+
+どの講義に対しても再利用可能な、希望登録・解除ボタンを作成します。
+
+1.  `frontend/src/components/`内に`RequestButton.tsx`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/RequestButton.tsx
+
+import React from 'react';
+import { useSWRConfig } from 'swr';
+import { requestLecture, cancelLectureRequest } from '../lib/api';
+import type { OfficialLecture } from '../types/officialLecture';
+
+interface RequestButtonProps {
+  lecture: OfficialLecture;
+}
+
+export const RequestButton = ({ lecture }: RequestButtonProps) => {
+  const { mutate } = useSWRConfig();
+
+  const handleRequest = async () => {
+    // 楽観的UI更新
+    mutate(
+      '/api/official-lectures', // 更新対象のSWRキー
+      (currentData: OfficialLecture[] | undefined) => {
+        // キャッシュデータをイミュータブルに更新
+        return currentData?.map(l => 
+          l.id === lecture.id ? { ...l, isRequested: true, requestCount: (l.requestCount || 0) + 1 } : l
+        );
+      },
+      false // APIへの再検証は行わない
+    );
+    // APIリクエスト
+    await requestLecture(lecture.id);
+    // 完了後、最新のデータでキャッシュを再検証
+    mutate('/api/official-lectures');
+  };
+
+  const handleCancel = async () => {
+    // 楽観的UI更新
+    mutate(
+      '/api/official-lectures',
+      (currentData: OfficialLecture[] | undefined) => {
+        return currentData?.map(l => 
+          l.id === lecture.id ? { ...l, isRequested: false, requestCount: Math.max(0, (l.requestCount || 1) - 1) } : l
+        );
+      },
+      false
+    );
+    // APIリクエスト
+    await cancelLectureRequest(lecture.id);
+    // 完了後、最新のデータでキャッシュを再検証
+    mutate('/api/official-lectures');
+  };
+
+  return (
+    <div>
+      {lecture.isRequested ? (
+        <button onClick={handleCancel}>希望を取り消す</button>
+      ) : (
+        <button onClick={handleRequest}>補講を希望する</button>
+      )}
+      <span>現在の希望者数: {lecture.requestCount || 0}人</span>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **楽観的UI更新:** `SWR`の`mutate`関数を最大限に活用します。APIのレスポンスを待たずにUIを即座に変更することで、ユーザーにストレスを感じさせない、滑らかな操作感を提供します。
+    *   **再利用性:** ボタンのロジックをコンポーネント化することで、将来的に公式講義一覧ページなど、別の場所でも同じボタンを簡単に再利用できます。
+
+### Step 5: 既存コンポーネントへの統合
+
+作成したコンポーネントを、既存のページやコンポーネントに組み込みます。
+
+1.  **`App.tsx`のレイアウト変更:**
+    *   `App.tsx`を開き、ランキングコンポーネントを配置するためのサイドパネル領域を追加します。
+
+2.  **公式講義一覧ページ/詳細モーダルの作成:**
+    *   `issuse.md`の仕様に基づき、公式講義の一覧ページまたは詳細モーダルを作成します。
+    *   `GET /api/official-lectures`を呼び出して講義リストを取得し、各講義に対して`RequestButton`コンポーネントを表示します。
+
+## 3.1.2.3. 動作確認テスト
+
+### テストの準備
+
+1.  **テストデータの投入:**
+    *   `psql`やDBeaverなどのDBクライアントで、`supplementary_lecture_requests`テーブルにいくつかの希望データを手動で`INSERT`しておきます。
+    ```sql
+    -- ユーザーIDと講義IDは、ご自身の環境に合わせて調整してください
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-1', 1);
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-2', 1);
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-1', 2);
+    ```
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、**一時的な認証バイパスが有効になっている**ことを確認してください。
+
+### テストの実施方法
+
+1.  **ランキング表示の確認:**
+    *   ブラウザでアプリケーションを開き、ランキングコンポーネントが表示されていることを確認します。
+    *   `psql`で投入したテストデータ通りのランキング（例: 微分積分学: 2人、統計学: 1人）が表示されていることを確認します。
+
+2.  **希望登録/解除の確認:**
+    *   公式講義の詳細画面や一覧画面を開きます。
+    *   「補講を希望する」ボタンをクリックします。
+    *   **想定される結果:**
+        *   クリック後、即座にボタンが「希望を取り消す」に変わり、希望者数が1人増えること（楽観的UI更新）。
+        *   ブラウザの開発者ツールで、`POST /api/official-lectures/:id/requests`へのAPIリクエストが成功していることを確認します。
+        *   ページをリロードしても、「希望を取り消す」の状態が維持されていることを確認します。
+    *   「希望を取り消す」ボタンをクリックし、逆の動作（ボタンが「希望する」に変わり、希望者数が1人減る）を確認します。
+
+3.  **ランキングの自動更新確認:**
+    *   ランキングを表示したまま、別のブラウザやAPIクライアントツールを使って、特定の講義への希望を登録・解除します。
+    *   **想定される結果:**
+        *   最大60秒（`refreshInterval`で設定した時間）待つと、ランキング表示が自動的に更新され、最新の希望者数が反映されることを確認します。

@@ -21,7 +21,7 @@ declare global {
 export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   // IAPから付与されるヘッダー情報を取得
   const emailHeader = req.headers['x-goog-authenticated-user-email'];
-
+  
   // ヘッダーが存在しない場合はエラー
   if (!emailHeader) {
     return res.status(401).send('Unauthorized: Missing IAP header');
