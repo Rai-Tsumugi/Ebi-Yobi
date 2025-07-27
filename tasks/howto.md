@@ -5,7 +5,7 @@
 ## 1. ブランチの作成と保護設定
 
 ### a. `develop` ブランチの作成
-以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジトリにプッシュします。
+以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジリにプッシュします。
 （この手順は実行済みです）
 ```bash
 git branch develop
@@ -15,7 +15,7 @@ git push origin develop
 ### b. ブランチの保護設定 (手動設定)
 `main` ブランチと `develop` ブランチに意図しないコミットが行われるのを防ぐため、保護ルールを設定します。
 
-1.  GitHubリポジトリのページにアクセスします。
+1.  GitHubリポジリのページにアクセスします。
 2.  `Settings` タブ > `Branches` メニューを選択します。
 3.  `Add branch protection rule` をクリックします。
 4.  **`main` ブランチの保護ルール:**
@@ -52,7 +52,7 @@ git push origin develop
 
 `issuse.md`で定義されているラベルをGitHubに設定し、Issueの分類を容易にします。
 
-1.  GitHubリポジトリの `Issues` タブ > `Labels` メニューを選択します。
+1.  GitHubリポジリの `Issues` タブ > `Labels` メニューを選択します。
 2.  `New label` ボタンをクリックし、以下のラベルを一つずつ作成します。
 
 ### 種別 (Type)
@@ -94,12 +94,12 @@ git push origin develop
 
 # Issue #1: プロジェクト管理システムのセットアップ手順
 
-このドキュメントは、GitHubリポジトリの初期設定を行うための手順書です。
+このドキュメントは、GitHubリポジリの初期設定を行うための手順書です。
 
 ## 1. ブランチの作成と保護設定
 
 ### a. `develop` ブランチの作成
-以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジトリにプッシュします。
+以下のコマンドを実行して `develop` ブランチを作成し、リモートリポジリにプッシュします。
 （この手順は実行済みです）
 ```bash
 git branch develop
@@ -109,7 +109,7 @@ git push origin develop
 ### b. ブランチの保護設定 (手動設定)
 `main` ブランチと `develop` ブランチに意図しないコミットが行われるのを防ぐため、保護ルールを設定します。
 
-1.  GitHubリポジトリのページにアクセスします。
+1.  GitHubリポジリのページにアクセスします。
 2.  `Settings` タブ > `Branches` メニューを選択します。
 3.  `Add branch protection rule` をクリックします。
 4.  **`main` ブランチの保護ルール:**
@@ -576,7 +576,7 @@ const port = process.env.PORT || 3001;
 // VercelのプレビューデプロイURLは動的に変わるため、正規表現で許可する
 const allowedOrigins = [
   'http://localhost:5173', // ローカル開発環境
-  /https:\/\/ebiyobi-frontend-.*\.vercel\.app\/, // Vercelのプレビュー環境
+  /https:\/\/ebiyobi-frontend-.*\.vercel\.app\//, // Vercelのプレビュー環境
   // TODO: 本番環境のドメインを追加
 ];
 app.use(cors({
@@ -2396,3 +2396,438 @@ export const SupplementaryLectureDetail = () => {
         *   開発者ツールのネットワークタブで、`DELETE /api/supplementary-lectures/<ID>/attendees`へのリクエストが`204 No Content`で成功していること。
     *   **想定される結果（開催者の場合）:**
         *   もしログイン中のダミーユーザーがその補講の開催者である場合、出席・キャンセルボタンが表示されないこと。
+
+---
+
+# Issue #9: 個人予定のCRUD機能の実装
+
+このセクションでは、`issuse.md`の「3.1.1. 個人予定のCRUD機能」に基づき、ユーザーが自身のプライベートな予定をカレンダー上で作成、編集、削除できる機能をモーダルUIで実装する手順を詳述します。
+
+## 3.1.1. バックエンド側の実装 (CRUD API)
+
+まず、個人予定を操作するためのAPIエンドポイントをバックエンドに実装します。
+
+### Step 1: 個人予定用ルーターの作成 (`backend/src/routes/personalEvents.ts`)
+
+1.  `backend/src/routes/`内に`personalEvents.ts`ファイルを作成し、以下の内容を記述します。
+
+    ```typescript
+    // backend/src/routes/personalEvents.ts
+
+    import { Router } from 'express';
+    import { PrismaClient } from '@prisma/client';
+
+    const router = Router();
+    const prisma = new PrismaClient();
+
+    // POST /api/personal-events - 新しい個人予定を作成
+    router.post('/', async (req, res) => {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { title, startTime, endTime, description } = req.body;
+
+      // バリデーション
+      if (!title || !startTime || !endTime) {
+        return res.status(400).json({ error: 'Title, startTime, and endTime are required.' });
+      }
+      if (new Date(startTime) >= new Date(endTime)) {
+        return res.status(400).json({ error: 'End time must be after start time.' });
+      }
+
+      try {
+        const newEvent = await prisma.personalEvent.create({
+          data: {
+            title,
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+            description,
+            userId: req.user.id, // ログインユーザーのIDを紐付ける
+          },
+        });
+        res.status(201).json(newEvent);
+      } catch (error) {
+        console.error('Failed to create personal event:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    // PUT /api/personal-events/:id - 個人予定を更新
+    router.put('/:id', async (req, res) => {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const eventId = parseInt(req.params.id, 10);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ error: 'Invalid event ID.' });
+      }
+
+      const { title, startTime, endTime, description } = req.body;
+
+      // バリデーション
+      if (!title || !startTime || !endTime) {
+        return res.status(400).json({ error: 'Title, startTime, and endTime are required.' });
+      }
+      if (new Date(startTime) >= new Date(endTime)) {
+        return res.status(400).json({ error: 'End time must be after start time.' });
+      }
+
+      try {
+        // 認可: 操作対象のイベントが本当にログインユーザーのものか確認
+        const existingEvent = await prisma.personalEvent.findUnique({
+          where: { id: eventId },
+        });
+
+        if (!existingEvent) {
+          return res.status(404).json({ error: 'Event not found.' });
+        }
+        if (existingEvent.userId !== req.user.id) {
+          return res.status(403).json({ error: 'Forbidden: You do not have permission to edit this event.' });
+        }
+
+        const updatedEvent = await prisma.personalEvent.update({
+          where: { id: eventId },
+          data: {
+            title,
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+            description,
+          },
+        });
+        res.json(updatedEvent);
+      } catch (error) {
+        console.error('Failed to update personal event:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    // DELETE /api/personal-events/:id - 個人予定を削除
+    router.delete('/:id', async (req, res) => {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const eventId = parseInt(req.params.id, 10);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ error: 'Invalid event ID.' });
+      }
+
+      try {
+        // 認可: 操作対象のイベントが本当にログインユーザーのものか確認
+        const existingEvent = await prisma.personalEvent.findUnique({
+          where: { id: eventId },
+        });
+
+        if (!existingEvent) {
+          return res.status(404).json({ error: 'Event not found.' });
+        }
+        if (existingEvent.userId !== req.user.id) {
+          return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this event.' });
+        }
+
+        await prisma.personalEvent.delete({
+          where: { id: eventId },
+        });
+        res.status(204).send(); // No Content
+      } catch (error) {
+        console.error('Failed to delete personal event:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+
+    export default router;
+    ```
+*   **設計思想:**
+    *   **RESTful API:** `POST`, `PUT`, `DELETE` メソッドを使い、リソース（個人予定）に対するCRUD操作を表現します。
+    *   **認可 (Authorization):** 各APIの冒頭で、`req.user`の存在を確認し、認証されていないリクエストを拒否します。さらに、更新・削除処理の前には、操作対象の予定がログインユーザー自身のものであるかをデータベースで検証し、他人の予定を操作できないようにします。これはセキュリティ上非常に重要です。
+    *   **入力バリデーション:** リクエストボディの内容を検証し、不正なデータ（例: 終了日時が開始日時より前）が登録されるのを防ぎます。
+    *   **適切なHTTPステータスコード:** 処理結果に応じて、`201 Created`, `204 No Content`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found` などを使い分け、クライアント側がAPIの応答を正しく解釈できるようにします。
+
+### Step 2: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した個人予定用ルーターを`index.ts`に組み込み、認証ミドルウェアを適用します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import userRouter from './routes/user';
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures';
+import personalEventRouter from './routes/personalEvents'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **設計思想:**
+    *   `/api/personal-events` というパスに個人予定関連のAPIを集約し、`iapAuthMiddleware`を適用することで、この機能全体に認証を必須とします。
+
+## 3.1.2. フロントエンド側の実装 (モーダルとフォーム)
+
+次に、ユーザーが直感的に操作できるモーダルUIをフロントエンドに実装します。
+
+### Step 1: 依存関係のインストール
+
+アクセシブルなモーダルUIを構築するために、`Headless UI`をインストールします。
+
+```bash
+# frontend ディレクトリで実行
+npm install @headlessui/react
+```
+*   **設計思想:**
+    *   `Headless UI`は、スタイルを持たないUIコンポーネントのロジック（開閉状態、キーボード操作、アクセシビリティ属性など）を提供します。これにより、開発者はコンポーネントの見た目を自由にカスタマイズしながら、アクセシビリティの高いUIを容易に構築できます。
+
+### Step 2: 個人予定モーダルコンポーネントの作成 (`frontend/src/components/PersonalEventModal.tsx`)
+
+個人予定の作成・編集・削除を行うためのモーダルコンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`PersonalEventModal.tsx`ファイルを作成し、以下の内容を記述します。
+
+    ```typescript
+    // frontend/src/components/PersonalEventModal.tsx
+
+    import React, { useState, useEffect } from 'react';
+    import { useForm } from 'react-hook-form';
+    import DatePicker from 'react-datepicker';
+    import 'react-datepicker/dist/react-datepicker.css';
+    import { Dialog } from '@headlessui/react';
+
+    // FullCalendarのイベントオブジェクトの型（仮）
+    interface EventInfo {
+      id: string;
+      title: string;
+      start: Date;
+      end: Date;
+      extendedProps: {
+        description?: string;
+      };
+    }
+
+    interface PersonalEventModalProps {
+      isOpen: boolean;
+      onClose: () => void;
+      onSave: () => void; // 保存成功時にカレンダーを再描画するためのコールバック
+      eventInfo: EventInfo | null; // 編集対象のイベント情報（新規作成時はnull）
+    }
+
+    interface FormData {
+      title: string;
+      startTime: Date;
+      endTime: Date;
+      description?: string;
+    }
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    export const PersonalEventModal = ({ isOpen, onClose, onSave, eventInfo }: PersonalEventModalProps) => {
+      const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>();
+      const [isSubmitting, setIsSubmitting] = useState(false);
+
+      const startTime = watch('startTime');
+
+      useEffect(() => {
+        // モーダルが開かれたときにフォームを初期化
+        if (isOpen) {
+          const initialData = {
+            title: eventInfo?.title || '',
+            startTime: eventInfo?.start || new Date(),
+            endTime: eventInfo?.end || new Date(new Date().getTime() + 60 * 60 * 1000), // デフォルトは1時間後
+            description: eventInfo?.extendedProps.description || '',
+          };
+          reset(initialData);
+        }
+      }, [isOpen, eventInfo, reset]);
+
+      const onSubmit = async (data: FormData) => {
+        setIsSubmitting(true);
+        const eventId = eventInfo ? eventInfo.id.replace('per-', '') : null;
+        const url = eventId ? `${API_BASE_URL}/api/personal-events/${eventId}` : `${API_BASE_URL}/api/personal-events`;
+        const method = eventId ? 'PUT' : 'POST';
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...data,
+              startTime: data.startTime.toISOString(),
+              endTime: data.endTime.toISOString(),
+            }),
+          });
+          if (!res.ok) throw new Error('Failed to save event');
+          onSave(); // 成功を親に通知
+          onClose();
+        } catch (error) {
+          console.error(error);
+          alert('保存に失敗しました。');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+
+      const handleDelete = async () => {
+        if (!eventInfo) return;
+        if (!confirm('この予定を削除しますか？')) return;
+
+        setIsSubmitting(true);
+        const eventId = eventInfo.id.replace('per-', '');
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/personal-events/${eventId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Failed to delete event');
+          onSave();
+          onClose();
+        } catch (error) {
+          console.error(error);
+          alert('削除に失敗しました。');
+        } finally {
+          setIsSubmitting(false);
+        }
+      };
+
+      return (
+        <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+          {/* ... Headless UIの定型コード (Overlay) ... */}
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md rounded bg-white p-6">
+              <Dialog.Title className="text-lg font-bold">
+                {eventInfo ? '予定の編集' : '予定の追加'}
+              </Dialog.Title>
+              
+              <form onSubmit={handleSubmit(onSubmit)} className="mt-4 space-y-4">
+                {/* ... フォーム要素 (title, startTime, endTime, description) ... */}
+                <button type="submit" disabled={isSubmitting}>{isSubmitting ? '保存中...' : '保存'}</button>
+                {eventInfo && (
+                  <button type="button" onClick={handleDelete} disabled={isSubmitting} className="text-red-500">
+                    削除
+                  </button>
+                )}
+              </form>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      );
+    };
+    ```
+*   **設計思想:**
+    *   **再利用可能なコンポーネント:** `PersonalEventModal`は、`eventInfo`プロパティを受け取ることで、**新規作成**と**編集**の両方のシナリオに対応できます。`eventInfo`が`null`なら新規作成モード、そうでなければ編集モードとして動作します。
+    *   **状態管理の分離:** モーダルの開閉状態（`isOpen`）は親コンポーネント（`Calendar.tsx`）が管理します。これにより、モーダル自身はフォームのロジックに集中でき、親はモーダルを制御しやすくなります。
+    *   **コールバックによる通知:** `onSave`コールバックを介して、API操作の成功を親コンポーネントに通知します。これにより、親コンポーネントはカレンダーの表示を更新するなどの後処理を実行できます。
+    *   **`useEffect`によるフォームの初期化:** `isOpen`フラグをトリガーとして`useEffect`内で`reset`関数を呼び出すことで、モーダルが表示されるたびにフォームの内容が正しく初期化されることを保証します。
+
+### Step 3: カレンダーコンポーネントとの連携 (`frontend/src/components/Calendar.tsx`)
+
+カレンダー上での操作（日付クリック、イベントクリック）に応じて、作成したモーダルを開くように`Calendar.tsx`を修正します。
+
+```typescript
+// frontend/src/components/Calendar.tsx (既存のコードを拡張)
+
+import React, { useState, useCallback } from 'react'; // useState, useCallbackをインポート
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction'; // DateClickArgをインポート
+import { useNavigate } from 'react-router-dom';
+import { PersonalEventModal } from './PersonalEventModal'; // モーダルをインポート
+import { EventClickArg } from '@fullcalendar/core'; // EventClickArgをインポート
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const Calendar = () => {
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const calendarRef = React.useRef<FullCalendar>(null);
+
+  const handleDateClick = useCallback((arg: DateClickArg) => {
+    // 日付クリックで新規作成モーダルを開く
+    setSelectedEvent({ start: arg.date, end: arg.date });
+    setIsModalOpen(true);
+  }, []);
+
+  const handleEventClick = useCallback((clickInfo: EventClickArg) => {
+    const type = clickInfo.event.extendedProps.type;
+    if (type === 'supplementary') {
+      navigate(`/lectures/${clickInfo.event.id.replace('sup-', '')}`);
+    } else if (type === 'personal') {
+      // 個人予定クリックで編集モーダルを開く
+      setSelectedEvent(clickInfo.event);
+      setIsModalOpen(true);
+    }
+  }, [navigate]);
+
+  const handleSave = useCallback(() => {
+    // API操作が成功したら、カレンダーのイベントを再取得して表示を更新
+    calendarRef.current?.getApi().refetchEvents();
+  }, []);
+
+  return (
+    <>
+      <PersonalEventModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        eventInfo={selectedEvent}
+      />
+      <FullCalendar
+        ref={calendarRef}
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{ /* ... */ }}
+        events={`${API_BASE_URL}/api/events`}
+        eventClick={handleEventClick}
+        dateClick={handleDateClick} // dateClickハンドラを追加
+        // ...
+      />
+    </>
+  );
+};
+```
+*   **設計思想:**
+    *   **状態によるモーダル制御:** `isModalOpen`と`selectedEvent`という2つの`state`でモーダルの表示状態と編集対象のイベント情報を管理します。
+    *   **`dateClick`と`eventClick`:** FullCalendarが提供する2つの異なるイベントハンドラを使い分け、ユーザーのアクション（日付クリックか、イベントクリックか）に応じて適切な処理（新規作成か、編集か）を起動します。
+    *   **`refetchEvents`による表示更新:** API操作が成功した際に、FullCalendarのAPI（`refetchEvents`）を呼び出してイベントデータを再取得します。これにより、ユーザーが行った変更が即座にカレンダーに反映され、UIとデータの一貫性が保たれます。`useCallback`で関数をメモ化し、不要な再レンダリングを防ぎます。
+
+## 3.1.3. 動作確認テスト
+
+ここまでの実装が正しく機能するかを、以下のシナリオでテストします。
+
+1.  **テストの準備:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、一時的な認証バイパスが有効になっていることを確認します。
+
+2.  **テストシナリオ:**
+    *   **新規作成:**
+        1.  カレンダーの任意の日付をクリックします。
+        2.  「予定の追加」モーダルが表示されることを確認します。
+        3.  タイトルと日時を入力し、「保存」ボタンをクリックします。
+        4.  モーダルが閉じ、カレンダー上に新しい個人予定が（`event-personal`クラスの色で）表示されることを確認します。
+        5.  ブラウザの開発者ツールで、`POST /api/personal-events`リクエストが`201 Created`で成功していることを確認します。
+    *   **編集:**
+        1.  先ほど作成した個人予定をクリックします。
+        2.  「予定の編集」モーダルが表示され、先ほど入力した内容がフォームにセットされていることを確認します。
+        3.  タイトルや日時を変更し、「保存」ボタンをクリックします。
+        4.  モーダルが閉じ、カレンダー上の予定が更新されていることを確認します。
+        5.  開発者ツールで、`PUT /api/personal-events/:id`リクエストが`200 OK`で成功していることを確認します。
+    *   **削除:**
+        1.  再度、個人予定をクリックします。
+        2.  「予定の編集」モーダル内の「削除」ボタンをクリックします。
+        3.  確認ダイアログが表示されるので、「OK」をクリックします。
+        4.  モーダルが閉じ、カレンダー上から予定が消えていることを確認します。
+        5.  開発者ツールで、`DELETE /api/personal-events/:id`リクエストが`204 No Content`で成功していることを確認します。
+    *   **認可エラーの確認 (推奨):**
+        1.  データベースを直接操作し、ある個人予定の`userId`を、現在ログインしているダミーユーザーとは別のIDに書き換えます。
+        2.  その予定をUI上でクリックして編集・削除しようとすると、操作が失敗し、コンソールに`403 Forbidden`エラーが表示されることを確認します。
+
+---
+
