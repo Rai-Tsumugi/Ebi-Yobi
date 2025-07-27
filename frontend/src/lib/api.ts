@@ -58,3 +58,17 @@ export const cancelAttendance = async (lectureId: number): Promise<void> => {
     method: 'DELETE',
   });
 };
+
+// 補講開催を希望するAPI
+export const requestLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'POST',
+  });
+};
+
+// 補講開催の希望を取り消すAPI
+export const cancelLectureRequest = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'DELETE',
+  });
+};

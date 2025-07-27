@@ -1,6 +1,6 @@
 # Issue #1: プロジェクト管理システムのセットアップ手順
 
-このドキュメントは、GitHubリポジトリの初期設定を行うための手順書です。
+このドキュメントは、GitHubリポジリの初期設定を行うための手順書です。
 
 ## 1. ブランチの作成と保護設定
 
@@ -1846,7 +1846,7 @@ export const SupplementaryLectureForm = () => {
     register('endTime', { required: '終了時間は必須です' });
   }, [register]);
 
-  const onSubmit = async (data: SupplementaryLectureFormData) => {
+  const onSubmit = async (data: FormData) => {
     try {
       // 日時をISO文字列に変換して送信
       const payload = {
@@ -1955,7 +1955,7 @@ export const SupplementaryLectureForm = () => {
 *   **インポート文の重複:** ファイル内に`import useSWR from 'swr';`が複数回記述されていないか確認し、もしあれば一つだけ残して他を削除してください。
 *   **インポートの順序:** `import useSWR from 'swr';`の行が、ファイルの先頭付近、他の`import`文と一緒に記述されていることを確認してください。
 
-3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)**
+3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)
     *   `frontend/src/types/`内に`officialLecture.ts`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
@@ -1994,10 +1994,130 @@ import { SupplementaryLectureForm } from './components/SupplementaryLectureForm'
 
 私的補講登録フォームで公式講義を選択できるように、公式講義のリストを返すAPIをバックエンドに実装します。
 
+**注意:** このAPIは、Issue #10「補講開催希望とランキング機能」の実装において、ユーザーの希望状況と総希望者数も返すように拡張されています。
+
 1.  `backend/src/routes/`内に`officialLectures.ts`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
 // backend/src/routes/officialLectures.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/official-lectures - 全ての公式講義リストを取得
+router.get('/', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const lectures = await prisma.officialLecture.findMany({
+      orderBy: {
+        name: 'asc', // 名前順でソート
+      },
+      include: {
+        requests: true, // 関連するリクエストも取得
+      },
+    });
+
+    const userId = req.user.id; // ログインユーザーのID
+
+    const responseLectures = lectures.map(lecture => {
+      const requestCount = lecture.requests.length;
+      const isRequested = lecture.requests.some(request => request.userId === userId);
+      
+      // 不要なrequestsプロパティを削除して返す
+      const { requests, ...rest } = lecture;
+      return {
+        ...rest,
+        requestCount,
+        isRequested,
+      };
+    });
+
+    res.json(responseLectures);
+  } catch (error) {
+    console.error('Failed to fetch official lectures:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST /api/official-lectures/:id/requests - 補講開催を希望する
+router.post('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に希望済みでないか確認
+    const existingRequest = await prisma.supplementaryLectureRequest.findUnique({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'Already requested' }); // 409 Conflict
+    }
+
+    await prisma.supplementaryLectureRequest.create({
+      data: {
+        userId: req.user.id,
+        officialLectureId,
+      },
+    });
+    res.status(201).send();
+
+  } catch (error) {
+    console.error('Failed to create lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/official-lectures/:id/requests - 補講開催の希望を取り消す
+router.delete('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    await prisma.supplementaryLectureRequest.delete({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+    res.status(204).send();
+
+  } catch (error) {
+    // @ts-ignore
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to delete lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
 
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
@@ -2211,6 +2331,10 @@ router.delete('/:id/attendees', async (req, res) => {
     res.status(204).send(); // 204 No Content
 
   } catch (error) {
+    // レコードが存在しない場合のエラー(P2025)をハンドリング
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
     console.error('Failed to cancel attendance:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -2783,7 +2907,11 @@ export const Calendar = () => {
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        headerToolbar={{ /* ... */ }}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
         events={`${API_BASE_URL}/api/events`}
         eventClick={handleEventClick}
         dateClick={handleDateClick} // dateClickハンドラを追加
@@ -2831,3 +2959,413 @@ export const Calendar = () => {
 
 ---
 
+
+# Issue #10: 補講開催希望とランキング機能の実装
+
+このセクションでは、`issuse.md`の「3.1.2. 補講開催希望とランキング機能」に基づき、ユーザーが公式講義に対する補講の開催を希望し、その希望者数ランキングを閲覧できる機能を実装する手順を詳述します。
+
+## 3.1.2.1. バックエンド側の実装
+
+### Step 1: APIの設計と実装 (`backend/src/routes/officialLectures.ts`の拡張)
+
+既存の`officialLectures.ts`ルーターに、希望の登録・解除を行うエンドポイントを追加します。
+
+1.  `backend/src/routes/officialLectures.ts`ファイルを開き、以下のエンドポイントを追加します。
+
+```typescript
+// backend/src/routes/officialLectures.ts (既存のコードに追加)
+
+// ... (既存のimport文、router, prismaの定義)
+
+// POST /api/official-lectures/:id/requests - 補講開催を希望する
+router.post('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に希望済みでないか確認
+    const existingRequest = await prisma.supplementaryLectureRequest.findUnique({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'Already requested' }); // 409 Conflict
+    }
+
+    await prisma.supplementaryLectureRequest.create({
+      data: {
+        userId: req.user.id,
+        officialLectureId,
+      },
+    });
+    res.status(201).send();
+
+  } catch (error) {
+    console.error('Failed to create lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/official-lectures/:id/requests - 補講開催の希望を取り消す
+router.delete('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    await prisma.supplementaryLectureRequest.delete({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+    res.status(204).send();
+
+  } catch (error) {
+    // レコードが存在しない場合のエラー(P2025)をハンドリング
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to delete lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+```
+*   **思想:**
+    *   **RESTfulな設計:** 特定の講義 (`/api/official-lectures/:id`) に関連するリソース (`/requests`) としてエンドポイントを設計します。
+    *   **冪等性:** `DELETE` 操作は冪等（何回実行しても結果が同じ）になるように設計します。`POST` は成功すればリソースが作成され、既に存在する場合は `409 Conflict` を返すことで、意図しない重複を防ぎます。
+    *   **具体的なエラーハンドリング:** Prismaがレコードを見つけられなかった場合に投げる `P2025` エラーを捕捉し、クライアントに `404 Not Found` を返すことで、より親切なAPIになります。
+
+### Step 2: ランキング集計APIの作成 (`backend/src/routes/lectureRequests.ts`)
+
+ランキングデータを返すための新しいルーターとエンドポイントを作成します。
+
+1.  `backend/src/routes/`内に`lectureRequests.ts`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/lectureRequests.ts
+
+import { Router } from 'express';
+import { prisma } from '../lib/db';
+
+const router = Router();
+
+// GET /api/lecture-requests/ranking - 補講開催希望のランキングを取得
+router.get('/ranking', async (req, res) => {
+  try {
+    const ranking = await prisma.supplementaryLectureRequest.groupBy({
+      by: ['officialLectureId'],
+      _count: {
+        officialLectureId: true,
+      },
+      orderBy: {
+        _count: {
+          officialLectureId: 'desc',
+        },
+      },
+      take: 10, // 上位10件に絞る
+    });
+
+    // 講義情報を取得してマージ
+    const lectureIds = ranking.map(r => r.officialLectureId);
+    const lectures = await prisma.officialLecture.findMany({
+      where: {
+        id: { in: lectureIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        professor: true,
+      },
+    });
+
+    const lectureMap = new Map(lectures.map(l => [l.id, l]));
+
+    const response = ranking.map(r => ({
+      officialLectureId: r.officialLectureId,
+      requestCount: r._count.officialLectureId,
+      lectureName: lectureMap.get(r.officialLectureId)?.name || '',
+      professor: lectureMap.get(r.officialLectureId)?.professor || '',
+    }));
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Failed to fetch lecture request ranking:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **効率的な集計:** Prismaの `groupBy` 機能を使って、データベース側で効率的に希望数を集計します。これにより、全データを取得してからサーバーサイドで集計するよりもパフォーマンスが向上します。
+    *   **N+1問題の回避:** `IN`句を使って、ランキングに必要な講義情報を一度のクエリでまとめて取得します。これにより、ランキングの件数分だけデータベースへの問い合わせが発生する「N+1問題」を避けることができます。
+    *   **データ整形:** バックエンド側でデータをマージし、フロントエンドがそのまま表示できるような親切な形式でレスポンスを返します。
+
+### Step 3: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した新しいルーターを`index.ts`に組み込みます。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+// ... (既存のimport文)
+import lectureRequestRouter from './routes/lectureRequests'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter);
+app.use('/api/lecture-requests', iapAuthMiddleware, lectureRequestRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+
+## 3.1.2.2. フロントエンド側の実装
+
+### Step 1: 型定義の追加 (`frontend/src/types/`)
+
+ランキングAPIのレスポンスと、公式講義の拡張情報（希望状況）の型を定義します。
+
+1.  `frontend/src/types/`に`lectureRequest.ts`ファイルを新規作成します。
+
+```typescript
+// frontend/src/types/lectureRequest.ts
+
+export interface LectureRequestRanking {
+  officialLectureId: number;
+  requestCount: number;
+  lectureName: string;
+  professor: string;
+}
+```
+
+2.  `frontend/src/types/officialLecture.ts`を修正し、ユーザー自身の希望状況と総希望数を追加します。
+
+```typescript
+// frontend/src/types/officialLecture.ts (修正)
+
+export interface OfficialLecture {
+  id: number;
+  name: string;
+  professor: string;
+  dayOfWeek: number;
+  period: number;
+  termId: number;
+  // 以下を追記
+  isRequested?: boolean; // ログインユーザーが希望済みか
+  requestCount?: number; // 全体の希望者数
+}
+```
+
+### Step 2: APIクライアントの拡張 (`frontend/src/lib/api.ts`)
+
+希望登録・解除を行うためのAPIクライアント関数を追加します。
+
+```typescript
+// frontend/src/lib/api.ts (既存のコードに追加)
+
+// ... (既存のimport文、fetcher, updateUserなど)
+
+// 補講開催を希望するAPI
+export const requestLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'POST',
+  });
+};
+
+// 補講開催の希望を取り消すAPI
+export const cancelLectureRequest = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'DELETE',
+  });
+};
+```
+
+### Step 3: ランキングコンポーネントの作成 (`frontend/src/components/LectureRequestRanking.tsx`)
+
+ランキングを表示するための専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`LectureRequestRanking.tsx`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/LectureRequestRanking.tsx
+
+import React from 'react';
+import useSWR from 'swr';
+import { fetcher } from '../lib/api';
+import type { LectureRequestRanking as RankingData } from '../types/lectureRequest';
+
+export const LectureRequestRanking = () => {
+  const { data: ranking, error } = useSWR<RankingData[]>('/api/lecture-requests/ranking', fetcher, {
+    refreshInterval: 60000, // 60秒ごとに自動更新
+  });
+
+  if (error) return <div>ランキングの読み込みに失敗しました。</div>;
+  if (!ranking) return <div>ランキングを読み込み中...</div>;
+
+  return (
+    <div className="lecture-request-ranking">
+      <h3>補講希望ランキング</h3>
+      <ol>
+        {ranking.map((item, index) => (
+          <li key={item.officialLectureId}>
+            <span>{index + 1}.</span>
+            <div>
+              <p>{item.lectureName} ({item.professor})</p>
+              <p>{item.requestCount}人が希望中</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **コンポーネント化:** ランキング表示のロジックを専用コンポーネントにカプセル化します。
+    *   **自動更新:** `SWR`の`refreshInterval`オプションを使い、ポーリング（定期的なデータ取得）を簡単に実装します。これにより、他のユーザーの希望がUIに自動的に反映されます。
+
+### Step 4: 希望登録ボタンコンポーネントの作成 (`frontend/src/components/RequestButton.tsx`)
+
+どの講義に対しても再利用可能な、希望登録・解除ボタンを作成します。
+
+1.  `frontend/src/components/`内に`RequestButton.tsx`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/RequestButton.tsx
+
+import React from 'react';
+import { useSWRConfig } from 'swr';
+import { requestLecture, cancelLectureRequest } from '../lib/api';
+import type { OfficialLecture } from '../types/officialLecture';
+
+interface RequestButtonProps {
+  lecture: OfficialLecture;
+}
+
+export const RequestButton = ({ lecture }: RequestButtonProps) => {
+  const { mutate } = useSWRConfig();
+
+  const handleRequest = async () => {
+    // 楽観的UI更新
+    mutate(
+      '/api/official-lectures', // 更新対象のSWRキー
+      (currentData: OfficialLecture[] | undefined) => {
+        // キャッシュデータをイミュータブルに更新
+        return currentData?.map(l => 
+          l.id === lecture.id ? { ...l, isRequested: true, requestCount: (l.requestCount || 0) + 1 } : l
+        );
+      },
+      false // APIへの再検証は行わない
+    );
+    // APIリクエスト
+    await requestLecture(lecture.id);
+    // 完了後、最新のデータでキャッシュを再検証
+    mutate('/api/official-lectures');
+  };
+
+  const handleCancel = async () => {
+    // 楽観的UI更新
+    mutate(
+      '/api/official-lectures',
+      (currentData: OfficialLecture[] | undefined) => {
+        return currentData?.map(l => 
+          l.id === lecture.id ? { ...l, isRequested: false, requestCount: Math.max(0, (l.requestCount || 1) - 1) } : l
+        );
+      },
+      false
+    );
+    // APIリクエスト
+    await cancelLectureRequest(lecture.id);
+    // 完了後、最新のデータでキャッシュを再検証
+    mutate('/api/official-lectures');
+  };
+
+  return (
+    <div>
+      {lecture.isRequested ? (
+        <button onClick={handleCancel}>希望を取り消す</button>
+      ) : (
+        <button onClick={handleRequest}>補講を希望する</button>
+      )}
+      <span>現在の希望者数: {lecture.requestCount || 0}人</span>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **楽観的UI更新:** `SWR`の`mutate`関数を最大限に活用します。APIのレスポンスを待たずにUIを即座に変更することで、ユーザーにストレスを感じさせない、滑らかな操作感を提供します。
+    *   **再利用性:** ボタンのロジックをコンポーネント化することで、将来的に公式講義一覧ページなど、別の場所でも同じボタンを簡単に再利用できます。
+
+### Step 5: 既存コンポーネントへの統合
+
+作成したコンポーネントを、既存のページやコンポーネントに組み込みます。
+
+1.  **`App.tsx`のレイアウト変更:**
+    *   `App.tsx`を開き、ランキングコンポーネントを配置するためのサイドパネル領域を追加します。
+
+2.  **公式講義一覧ページ/詳細モーダルの作成:**
+    *   `issuse.md`の仕様に基づき、公式講義の一覧ページまたは詳細モーダルを作成します。
+    *   `GET /api/official-lectures`を呼び出して講義リストを取得し、各講義に対して`RequestButton`コンポーネントを表示します。
+
+## 3.1.2.3. 動作確認テスト
+
+### テストの準備
+
+1.  **テストデータの投入:**
+    *   `psql`やDBeaverなどのDBクライアントで、`supplementary_lecture_requests`テーブルにいくつかの希望データを手動で`INSERT`しておきます。
+    ```sql
+    -- ユーザーIDと講義IDは、ご自身の環境に合わせて調整してください
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-1', 1);
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-2', 1);
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-1', 2);
+    ```
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、**一時的な認証バイパスが有効になっている**ことを確認してください。
+
+### テストの実施方法
+
+1.  **ランキング表示の確認:**
+    *   ブラウザでアプリケーションを開き、ランキングコンポーネントが表示されていることを確認します。
+    *   `psql`で投入したテストデータ通りのランキング（例: 微分積分学: 2人、統計学: 1人）が表示されていることを確認します。
+
+2.  **希望登録/解除の確認:**
+    *   公式講義の詳細画面や一覧画面を開きます。
+    *   「補講を希望する」ボタンをクリックします。
+    *   **想定される結果:**
+        *   クリック後、即座にボタンが「希望を取り消す」に変わり、希望者数が1人増えること（楽観的UI更新）。
+        *   ブラウザの開発者ツールで、`POST /api/official-lectures/:id/requests`へのAPIリクエストが成功していることを確認します。
+        *   ページをリロードしても、「希望を取り消す」の状態が維持されていることを確認します。
+    *   「希望を取り消す」ボタンをクリックし、逆の動作（ボタンが「希望する」に変わり、希望者数が1人減る）を確認します。
+
+3.  **ランキングの自動更新確認:**
+    *   ランキングを表示したまま、別のブラウザやAPIクライアントツールを使って、特定の講義への希望を登録・解除します。
+    *   **想定される結果:**
+        *   最大60秒（`refreshInterval`で設定した時間）待つと、ランキング表示が自動的に更新され、最新の希望者数が反映されることを確認します。
