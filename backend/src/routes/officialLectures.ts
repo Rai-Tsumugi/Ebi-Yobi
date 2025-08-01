@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, OfficialLecture, SupplementaryLectureRequest } from '@prisma/client';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -22,9 +22,9 @@ router.get('/', async (req, res) => {
 
     const userId = req.user.id; // ログインユーザーのID
 
-    const responseLectures = lectures.map(lecture => {
+    const responseLectures = lectures.map((lecture: OfficialLecture & { requests: SupplementaryLectureRequest[] }) => {
       const requestCount = lecture.requests.length;
-      const isRequested = lecture.requests.some(request => request.userId === userId);
+      const isRequested = lecture.requests.some((request: SupplementaryLectureRequest) => request.userId === userId);
       
       // 不要なrequestsプロパティを削除して返す
       const { requests, ...rest } = lecture;

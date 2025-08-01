@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, SupplementaryLecture, OfficialLecture, User, SupplementaryLectureAttendance } from '@prisma/client';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -39,7 +39,7 @@ router.get('/:id', async (req, res) => {
         name: lecture.creator.name || lecture.creator.university_email.split('@')[0],
       },
       attendeeCount: lecture.attendees.length,
-      isAttending: lecture.attendees.some(attendee => attendee.userId === req.user?.id), // この行を追加
+      isAttending: lecture.attendees.some((attendee: SupplementaryLectureAttendance) => attendee.userId === req.user?.id), // この行を追加
     };
 
     res.json(response);
