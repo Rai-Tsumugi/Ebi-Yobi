@@ -2527,7 +2527,7 @@ export const SupplementaryLectureDetail = () => {
 
 このセクションでは、`issuse.md`の「3.1.1. 個人予定のCRUD機能」に基づき、ユーザーが自身のプライベートな予定をカレンダー上で作成、編集、削除できる機能をモーダルUIで実装する手順を詳述します。
 
-## 3.1.1. バックエンド側の実装 (CRUD API)
+## 3.1.1.1. バックエンド側の実装 (CRUD API)
 
 まず、個人予定を操作するためのAPIエンドポイントをバックエンドに実装します。
 
@@ -2696,7 +2696,7 @@ app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter); // こ�
 *   **設計思想:**
     *   `/api/personal-events` というパスに個人予定関連のAPIを集約し、`iapAuthMiddleware`を適用することで、この機能全体に認証を必須とします。
 
-## 3.1.2. フロントエンド側の実装 (モーダルとフォーム)
+## 3.1.1.2. フロントエンド側の実装 (モーダルとフォーム)
 
 次に、ユーザーが直感的に操作できるモーダルUIをフロントエンドに実装します。
 
@@ -2926,7 +2926,7 @@ export const Calendar = () => {
     *   **`dateClick`と`eventClick`:** FullCalendarが提供する2つの異なるイベントハンドラを使い分け、ユーザーのアクション（日付クリックか、イベントクリックか）に応じて適切な処理（新規作成か、編集か）を起動します。
     *   **`refetchEvents`による表示更新:** API操作が成功した際に、FullCalendarのAPI（`refetchEvents`）を呼び出してイベントデータを再取得します。これにより、ユーザーが行った変更が即座にカレンダーに反映され、UIとデータの一貫性が保たれます。`useCallback`で関数をメモ化し、不要な再レンダリングを防ぎます。
 
-## 3.1.3. 動作確認テスト
+## 3.1.1.3. 動作確認テスト
 
 ここまでの実装が正しく機能するかを、以下のシナリオでテストします。
 
@@ -3369,3 +3369,445 @@ export const RequestButton = ({ lecture }: RequestButtonProps) => {
     *   ランキングを表示したまま、別のブラウザやAPIクライアントツールを使って、特定の講義への希望を登録・解除します。
     *   **想定される結果:**
         *   最大60秒（`refreshInterval`で設定した時間）待つと、ランキング表示が自動的に更新され、最新の希望者数が反映されることを確認します。
+
+# Issue #11: 管理者向けCSVインポート機能
+
+このセクションでは、`issuse.md`の「3.1.3. 管理者向けCSV一括インポート機能」に基づき、管理者ユーザーが大学公式の講義データを一括で登録・更新する機能の実装手順を詳述します。
+
+## 3.1.3.1. バックエンド側の実装
+
+管理者専用のAPIエンドポイントと、そのエンドポイントを保護するための権限チェックミドルウェアを実装します。
+
+### Step 1: 依存関係のインストール
+
+CSVファイルのアップロードと解析のために、`multer`と`papaparse`をインストールします。
+
+```bash
+# backend ディレクトリで実行
+npm install multer papaparse
+# 型定義もインストール
+npm install -D @types/multer @types/papaparse
+```
+*   **思想:**
+    *   `multer`: Node.jsで`multipart/form-data`形式のリクエスト（ファイルアップロードなど）を扱うための標準的なミドルウェアです。
+    *   `papaparse`: 高機能なCSVパーサーです。ストリーミング処理に対応しているため、サーバーのメモリを圧迫することなく、大規模なCSVファイルも効率的に処理できます。
+
+### Step 2: 管理者権限ミドルウェアの作成 (`backend/src/middleware/admin.ts`)
+
+APIリクエストを処理する前に、ログインユーザーが管理者（`ADMIN`）ロールを持っているかを確認するミドルウェアを作成します。
+
+1.  `backend/src/middleware/`内に`admin.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/middleware/admin.ts
+
+import { Request, Response, NextFunction } from 'express';
+
+export const adminOnlyMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // iapAuthMiddlewareによってreq.userがセットされていることが前提
+  if (req.user && req.user.role === 'ADMIN') {
+    next(); // ユーザーがADMINなら次の処理へ
+  } else {
+    // ADMINでなければアクセスを拒否
+    res.status(403).json({ error: 'Forbidden: Administrator access required.' });
+  }
+};
+```
+*   **思想:**
+    *   **権限分離:** 認証（`iapAuthMiddleware`）と認可（`adminOnlyMiddleware`）を異なるミドルウェアに分離することで、それぞれの責務を明確にします。これにより、将来的に「編集者」のような新しいロールが追加された場合でも、柔軟に認可ロジックを拡張できます。
+
+### Step 3: 管理者用ルーターの作成 (`backend/src/routes/admin.ts`)
+
+CSVインポートAPIのエンドポイントを定義するルーターを作成します。
+
+1.  `backend/src/routes/`内に`admin.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/admin.ts
+
+import { Router } from 'express';
+import multer from 'multer';
+import Papa from 'papaparse';
+import { prisma } from '../lib/db';
+import { Readable } from 'stream';
+
+const router = Router();
+
+// ファイルをメモリ上にバッファとして保存するmulter設定
+const upload = multer({ storage: multer.memoryStorage() });
+
+// POST /api/admin/import-lectures - CSVファイルで公式講義を一括登録
+router.post('/import-lectures', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
+  const fileBuffer = req.file.buffer;
+  const lectures: any[] = [];
+
+  try {
+    // BufferをStreamに変換してPapaparseでストリーミング処理
+    const stream = Readable.from(fileBuffer);
+    
+    await new Promise<void>((resolve, reject) => {
+      Papa.parse(stream, {
+        header: true, // 1行目をヘッダーとして扱う
+        skipEmptyLines: true,
+        step: (result) => {
+          // 各行のデータをバリデーションし、配列に追加
+          const row = result.data as any;
+          if (row.name && row.professor && row.dayOfWeek && row.period && row.termId) {
+            lectures.push({
+              name: row.name,
+              professor: row.professor,
+              dayOfWeek: parseInt(row.dayOfWeek, 10),
+              period: parseInt(row.period, 10),
+              termId: parseInt(row.termId, 10),
+            });
+          } else {
+            // バリデーションエラーがある行はスキップまたはエラー処理
+            console.warn('Skipping invalid row:', result.data);
+          }
+        },
+        complete: () => {
+          resolve();
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+
+    // トランザクション内で洗い替え処理を実行
+    await prisma.$transaction(async (tx) => {
+      // 1. 既存の公式講義データを全て削除
+      await tx.officialLecture.deleteMany({});
+      
+      // 2. CSVからパースした新しいデータを一括登録
+      await tx.officialLecture.createMany({
+        data: lectures,
+      });
+    });
+
+    res.status(200).json({ message: `Successfully imported ${lectures.length} lectures.` });
+
+  } catch (error) {
+    console.error('CSV import failed:', error);
+    res.status(500).json({ error: 'Failed to import CSV file.', details: (error as Error).message });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **洗い替え方式:** 既存のデータを全て削除してから新しいデータを登録する「洗い替え」方式を採用することで、ロジックを単純化し、データの整合性を保ちやすくします。
+    *   **トランザクション:** データの削除と登録という一連の操作を`prisma.$transaction`でラップすることで、処理の途中でエラーが発生した場合に全ての変更がロールバックされ、データベースが中途半端な状態になるのを防ぎます。
+    *   **サーバーサイドでのパース:** クライアント側ではなくサーバー側でCSVをパースすることで、クライアントの実装を簡潔に保ち、サーバー側で一貫したバリデーションルールを適用できます。
+
+### Step 4: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した管理者用ルーターを`index.ts`に組み込みます。この際、**認証ミドルウェアと管理者権限ミドルウェアの両方を適用**します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import { adminOnlyMiddleware } from './middleware/admin'; // インポートを追加
+import userRouter from './routes/user';
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures';
+import officialLectureRouter from './routes/officialLectures';
+import personalEventRouter from './routes/personalEvents';
+import lectureRequestRouter from './routes/lectureRequests';
+import adminRouter from './routes/admin'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter);
+app.use('/api/lecture-requests', iapAuthMiddleware, lectureRequestRouter);
+// 管理者用ルート: IAP認証と管理者ロールチェックの両方を適用
+app.use('/api/admin', iapAuthMiddleware, adminOnlyMiddleware, adminRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **思想:**
+    *   **ミドルウェアチェーン:** Expressではミドルウェアを連続して適用できます。`/api/admin`へのリクエストは、まず`iapAuthMiddleware`で「学内ユーザーか」を検証し、次に`adminOnlyMiddleware`で「管理者か」を検証し、両方をパスした場合にのみ`adminRouter`の処理が実行されます。これにより、段階的で強固なアクセス制御を実現します。
+
+## 3.1.3.2. フロントエンド側の実装
+
+管理者ユーザーにのみ表示されるCSVインポートページを実装します。
+
+### Step 1: 管理者ページの作成 (`frontend/src/components/AdminPage.tsx`)
+
+ファイルアップロードUIを持つ管理者専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`AdminPage.tsx`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/AdminPage.tsx
+
+import React, { useState } from 'react';
+import { useUser } from '../hooks/useUser';
+
+export const AdminPage = () => {
+  const { user } = useUser();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string>('');
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFile(event.target.files[0]);
+      setUploadMessage('');
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadMessage('ファイルを選択してください。');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadMessage('アップロード中...');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      // IAP認証情報はブラウザが自動で付与するため、特別なヘッダーは不要
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/import-lectures`, {
+        method: 'POST',
+        // 'Content-Type'はブラウザが自動で設定するため、手動で設定しない
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'アップロードに失敗しました。');
+      }
+
+      setUploadMessage(data.message);
+    } catch (error) {
+      setUploadMessage(`エラー: ${(error as Error).message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // 管理者でない場合は権限がない旨を表示
+  if (user?.role !== 'ADMIN') {
+    return (
+      <div>
+        <h2>管理者専用ページ</h2>
+        <p>このページを閲覧する権限がありません。</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-page">
+      <h2>管理者向けCSV一括インポート</h2>
+      <p>大学公式の講義データをCSVファイルで一括登録します。</p>
+      <p><strong>注意:</strong> この操作は既存の全公式講義データを上書きします。</p>
+      
+      <div className="csv-format-info">
+        <h4>CSVフォーマット</h4>
+        <p>CSVファイルは以下のヘッダーを持つ必要があります:</p>
+        <code>name, professor, dayOfWeek, period, termId</code>
+      </div>
+
+      <div className="upload-form">
+        <input type="file" accept=".csv" onChange={handleFileChange} disabled={isUploading} />
+        <button onClick={handleUpload} disabled={isUploading || !selectedFile}>
+          {isUploading ? '処理中...' : 'インポート実行'}
+        </button>
+      </div>
+
+      {uploadMessage && <div className="upload-feedback">{uploadMessage}</div>}
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **クライアントサイドでの権限チェック:** `useUser`フックから取得したユーザーロールを基に、コンポーネントの表示内容を切り替えます。これにより、APIへの不要なリクエストを防ぎ、ユーザーに即座にフィードバックを提供できます。
+    *   **`FormData`の利用:** ファイルを送信する際は、`FormData`オブジェクトを利用するのが標準的な方法です。`Content-Type`ヘッダーはブラウザが自動的に`multipart/form-data`として適切に設定してくれるため、手動で指定する必要はありません。
+
+### Step 2: ルーティングの追加 (`frontend/src/App.tsx`)
+
+管理者ページへのルートを`App.tsx`に追加します。
+
+```typescript
+// frontend/src/App.tsx (既存のRoutesに追加)
+
+import { AdminPage } from './components/AdminPage'; // インポートを追加
+
+// ... (既存のRoutes)
+
+          <Routes>
+            {/* ...既存のルート... */}
+            <Route path="/official-lectures" element={<OfficialLectureList />} />
+            <Route path="/admin" element={<AdminPage />} /> {/* この行を追加 */}
+          </Routes>
+
+// ... (既存のコード)
+```
+
+## 3.1.3.3. 動作確認テスト
+
+管理者向け機能が正しく動作し、権限のないユーザーからのアクセスを適切にブロックできるかを確認します。
+
+### テストの準備
+
+1.  **管理者ユーザーの作成:**
+    *   `psql`やDBeaverなどのデータベースクライアントでローカルのDBに接続します。
+    *   テストに使用するユーザー（例: `test-user@example.com`）の`role`を`ADMIN`に手動で更新します。
+    ```sql
+    UPDATE "User" SET role = 'ADMIN' WHERE university_email = 'test-user@example.com';
+    ```
+
+2.  **テスト用CSVファイルの準備:**
+    *   以下の内容で`lectures.csv`というファイルを作成します。
+    ```csv
+    name,professor,dayOfWeek,period,termId
+    量子力学,シュレディンガー,3,1,1
+    相対性理論,アインシュタイン,5,3,1
+    ```
+
+### テストの実施
+
+1.  **管理者ユーザーとしてログイン:**
+    *   `backend/src/middleware/auth.ts`で認証バイパスが有効になっていることを確認し、管理者ユーザー（`test-user@example.com`）としてアプリケーションにアクセスします。
+
+2.  **管理者ページへのアクセス:**
+    *   ブラウザで直接 `http://localhost:5173/admin` にアクセスします。
+
+3.  **CSVのインポート:**
+    *   「ファイルを選択」ボタンで、準備した`lectures.csv`を選択します。
+    *   「インポート実行」ボタンをクリックします。
+
+### 想定される結果
+
+-   **管理者ユーザーの場合:**
+    -   `/admin`ページに「管理者向けCSV一括インポート」のUIが表示される。
+    -   CSVファイルをアップロード後、「Successfully imported 2 lectures.」のような成功メッセージが表示される。
+    -   データベースの`OfficialLecture`テーブルの内容が、`lectures.csv`の内容で上書きされていることを確認する。
+
+-   **一般ユーザーの場合:**
+    -   `role`が`USER`のユーザーでログインし、`/admin`ページにアクセスする。
+    -   「このページを閲覧する権限がありません。」というメッセージが表示され、インポート機能が利用できないことを確認する。
+    -   APIクライアントツールで直接`/api/admin/import-lectures`にリクエストを送信した場合、ステータスコード`403 Forbidden`が返されることを確認する。
+
+# Issue #12: Google OAuth による組織内認証の詳細手順
+
+このドキュメントは、`issuse.md`の「3.2. Google OAuth による組織内認証」に基づき、より詳細な実装手順、設計思想、テスト方法を定義するものです。
+
+## 3.2.1. 設計思想
+
+- **セキュリティの強化**: Google IAPによる認証は、リクエストがGoogleアカウントによって認証されていることを保証しますが、「どの」Googleアカウントであるかまでは問いません。本機能は、許可された組織（大学など）のドメインを持つアカウントのみにアクセスを限定することで、セキュリティを一層強化することを目的とします。
+- **責務の分離**: 認証（Authentication）と認可（Authorization）の責務を明確に分離します。
+    - **認証 (IAP)**: リクエストが正当なGoogleユーザーからのものであることを確認する。
+    - **認可 (本実装)**: 認証されたユーザーが、我々のサービスを利用する権限（＝許可された組織のメンバーであること）を持っているかを確認する。
+- **ユーザー体験の向上**: ユーザーがアクセスを拒否された際に、なぜ拒否されたのかを明確にフィードバックすることで、混乱を防ぎます。
+
+## 3.2.2. バックエンド側の実装
+
+### Step 1: 認証ミドルウェアの強化 (`backend/src/middleware/auth.ts`)
+
+既存の`iapAuthMiddleware`に、組織ドメインを検証するロジックを追加します。
+
+1.  **許可ドメインのリストを定義**: `ALLOWED_DOMAINS`という定数を定義します。将来的には、このリストを環境変数 (`process.env.ALLOWED_DOMAINS`) から読み込むように変更することが望ましいです。
+
+2.  **ドメインの抽出と検証**: IAPヘッダーから取得したメールアドレスを`@`で分割し、ドメイン部分を取得します。取得したドメインが`ALLOWED_DOMAINS`リストに含まれているかを確認します。
+
+3.  **アクセス拒否**: ドメインがリストに含まれていない場合、`403 Forbidden`ステータスコードと、アクセスが拒否された理由を示すJSONメッセージを返却して処理を中断します。
+
+```typescript
+// backend/src/middleware/auth.ts (修正箇所)
+
+// ... (既存のコード)
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // ... (既存のIAPヘッダー取得とメールアドレス抽出ロジック)
+
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // --- ここから追加・修正するロジック ---
+  // 許可するドメインのリストを定義（環境変数から読み込むのが理想的）
+  const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || 'your-university.ac.jp').split(',');
+
+  const domain = email.split('@')[1]; // メールアドレスからドメインを抽出
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).json({ error: 'Forbidden: Access from this organization is not allowed.' });
+  }
+  // --- ここまで追加・修正するロジック ---
+
+  try {
+    // ... (既存のユーザー検索・作成ロジック)
+  } catch (error) {
+    // ...
+  }
+};
+```
+
+## 3.2.3. フロントエンド側の実装
+
+### Step 1: ログインボタンの実装
+
+ユーザーが能動的にログインプロセスを開始できるように、ログインボタンを設置します。これは、特にユーザーが未認証の状態で最初に訪れるページ（例: トップページ）で有効です。
+
+- **UIの実装**: 未認証状態のユーザーに対して、「学内アカウントでログイン」ボタンを表示します。
+- **動作**: このボタンがクリックされたら、保護されたAPIエンドポイント（例: `/api/users/me`）へのリクエストをトリガーします。IAPが有効な環境では、このリクエストが自動的にGoogleのログインページへのリダイレクトを引き起こします。
+
+### Step 2: エラーハンドリングの強化
+
+バックエンドから`403 Forbidden`が返された場合に、それをユーザーに分かりやすく伝えます。
+
+- **`useUser`フックの修正 (`frontend/src/hooks/useUser.ts`):**
+  - `SWR`のエラーオブジェクト (`error`) をハンドリングし、ステータスコードが`403`の場合に特別なエラー状態をコンポーネントに渡すようにします。
+
+- **UIの修正:**
+  - `useUser`フックから受け取ったエラー状態を基に、「あなたのアカウントのドメインではこのサービスを利用できません。」といった具体的なエラーメッセージを表示します。
+
+## 3.2.4. テスト
+
+### 3.2.4.1. テストシナリオ
+
+以下の2つのシナリオでテストを実施します。
+
+1.  **許可されたドメインを持つユーザー**
+2.  **許可されていないドメインを持つユーザー**
+
+### 3.2.4.2. テストの準備
+
+- **バックエンド**: `backend/.env`ファイルに、テスト用の許可ドメインを設定します。
+  ```
+  # backend/.env
+  ALLOWED_DOMAINS=your-university.ac.jp,example.com
+  ```
+- **フロントエンド**: 開発サーバーを起動します。
+
+### 4.3. テストの実施と想定される結果
+
+APIクライアントツール（Postman, Insomniaなど）またはブラウザの開発者ツールを用いて、バックエンドAPIへのリクエストをシミュレートします。
+
+- **シナリオ1: 許可されたドメイン**
+  - **リクエストヘッダー**: `X-Goog-Authenticated-User-Email: accounts.google.com:user@your-university.ac.jp`
+  - **送信先**: `GET http://localhost:3001/api/users/me`
+  - **想定される結果**: ステータスコード`200 OK`が返却され、ユーザー情報がJSON形式で返される。
+
+- **シナリオ2: 許可されていないドメイン**
+  - **リクエストヘッダー**: `X-Goog-Authenticated-User-Email: accounts.google.com:user@other-domain.com`
+  - **送信先**: `GET http://localhost:3001/api/users/me`
+  - **想定される結果**: ステータスコード`403 Forbidden`が返却され、レスポンスボディに`{ "error": "Forbidden: Access from this organization is not allowed." }`のようなJSONが含まれる。
