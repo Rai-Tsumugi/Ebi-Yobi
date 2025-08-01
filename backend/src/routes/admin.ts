@@ -3,6 +3,7 @@ import multer from 'multer';
 import Papa from 'papaparse';
 import { prisma } from '../lib/db';
 import { Readable } from 'stream';
+import { Prisma } from '@prisma/client';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.post('/import-lectures', upload.single('file'), async (req, res) => {
       Papa.parse(stream, {
         header: true, // 1行目をヘッダーとして扱う
         skipEmptyLines: true,
-        step: (result) => {
+        step: (result: Papa.ParseStepResult<any>) => {
           // 各行のデータをバリデーションし、配列に追加
           const row = result.data as any;
           if (row.name && row.professor && row.dayOfWeek && row.period && row.termId) {
@@ -45,14 +46,14 @@ router.post('/import-lectures', upload.single('file'), async (req, res) => {
         complete: () => {
           resolve();
         },
-        error: (error) => {
+        error: (error: any) => {
           reject(error);
         },
       });
     });
 
     // トランザクション内で洗い替え処理を実行
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. 既存の公式講義データを全て削除
       await tx.officialLecture.deleteMany({});
       
@@ -71,3 +72,4 @@ router.post('/import-lectures', upload.single('file'), async (req, res) => {
 });
 
 export default router;
+

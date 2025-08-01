@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { PrismaClient, SupplementaryLecture, PersonalEvent, OfficialLecture, LectureException, Term, PeriodSetting } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import type { SupplementaryLecture, PersonalEvent, OfficialLecture, LectureException, Term, PeriodSetting, User } from '@prisma/client';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -32,7 +33,7 @@ const getSupplementaryLectures = async (startDate: Date, endDate: Date): Promise
     },
   });
 
-  return lectures.map(lecture => ({
+  return lectures.map((lecture: SupplementaryLecture & { officialLecture: OfficialLecture; creator: User }) => ({
     id: `sup-${lecture.id}`,
     title: `${lecture.officialLecture.name} 補講`,
     start: lecture.startTime.toISOString(),
@@ -61,7 +62,7 @@ const getPersonalEvents = async (userId: string, startDate: Date, endDate: Date)
     },
   });
 
-  return events.map(event => ({
+  return events.map((event: PersonalEvent) => ({
     id: `per-${event.id}`,
     title: event.title,
     start: event.startTime.toISOString(),
@@ -85,7 +86,7 @@ const getOfficialLectures = async (startDate: Date, endDate: Date): Promise<Cale
 
   if (terms.length === 0) return [];
 
-  const termIds = terms.map(term => term.id);
+  const termIds = terms.map((term: Term) => term.id);
 
   const [lectures, exceptions, periodSettings] = await Promise.all([
     prisma.officialLecture.findMany({ where: { termId: { in: termIds } } }),
@@ -93,15 +94,15 @@ const getOfficialLectures = async (startDate: Date, endDate: Date): Promise<Cale
     prisma.periodSetting.findMany(),
   ]);
 
-  const periodMap = new Map(periodSettings.map(p => [p.period, { startTime: p.startTime, endTime: p.endTime }]));
-  const exceptionMap = new Map(exceptions.map(e => [`${e.officialLectureId}-${e.originalDate.toISOString().split('T')[0]}`, e]));
+  const periodMap = new Map<number, { startTime: string; endTime: string }>(periodSettings.map((p: PeriodSetting) => [p.period, { startTime: p.startTime, endTime: p.endTime }]));
+  const exceptionMap = new Map<string, LectureException>(exceptions.map((e: LectureException) => [`${e.officialLectureId}-${e.originalDate.toISOString().split('T')[0]}`, e]));
 
   const events: CalendarEvent[] = [];
   let currentDate = new Date(startDate);
 
   while (currentDate < endDate) {
     const dayOfWeek = currentDate.getDay(); // 0=日, 1=月, ..., 6=土
-    const lecturesOnDay = lectures.filter(l => l.dayOfWeek === (dayOfWeek === 0 ? 7 : dayOfWeek)); // DBは月=1..日=7
+    const lecturesOnDay = lectures.filter((l: OfficialLecture) => l.dayOfWeek === (dayOfWeek === 0 ? 7 : dayOfWeek)); // DBは月=1..日=7
 
     for (const lecture of lecturesOnDay) {
       const dateString = currentDate.toISOString().split('T')[0];
@@ -175,3 +176,4 @@ router.get('/', async (req, res) => {
 });
 
 export default router;
+
