@@ -1,0 +1,1982 @@
+[
+  {
+    "textPayload": "starting build \"f8c51ac0-88f5-408a-93a0-488d1a958379\"\n",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-0",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.268731541Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "MAIN"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "FETCHSOURCE",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-1",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.268756725Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "MAIN",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: Using 'master' as the name for the initial branch. This default branch name",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-2",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968097942Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: is subject to change. To configure the initial branch name to use in all",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-3",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968177675Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: of your new repositories, which will suppress this warning, call:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-4",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968180582Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-5",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968183546Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDERR"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: \tgit config --global init.defaultBranch <name>",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-6",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968185581Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDERR"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-7",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968186801Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDERR"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-8",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968188031Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: 'development'. The just-created branch can be renamed via this command:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-9",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968189601Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDERR"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-10",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968190672Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: \tgit branch -m <name>",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-11",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968192448Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDERR"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-12",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968194073Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDERR"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "hint: Disable this message with \"git config set advice.defaultBranchName false\"",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-13",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.968195554Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "Initialized empty Git repository in /workspace/.git/",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-14",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:50.970952549Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDOUT",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:51.374637012Z"
+  },
+  {
+    "textPayload": "From https://github.com/Rai-Tsumugi/Ebi-Yobi",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-15",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:52.153308925Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:52.292344976Z"
+  },
+  {
+    "textPayload": " * branch            91953573ffd421d024df6d1a35e21f2aed1e9859 -> FETCH_HEAD",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-16",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:52.153330851Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDERR",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:52.292344976Z"
+  },
+  {
+    "textPayload": "HEAD is now at 9195357 Merge pull request #17 from Rai-Tsumugi/fix/final-auth-error-handling",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-17",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:52.326617540Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDOUT"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:53.300975568Z"
+  },
+  {
+    "textPayload": "GitCommit:",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-18",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:52.327579801Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "gsutil:STDOUT"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:53.300975568Z"
+  },
+  {
+    "textPayload": "91953573ffd421d024df6d1a35e21f2aed1e9859",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-19",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:52.329312625Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "gsutil:STDOUT",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:53.300975568Z"
+  },
+  {
+    "textPayload": "BUILD",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-20",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:52.656516405Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "MAIN",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:53.300975568Z"
+  },
+  {
+    "textPayload": "Starting Step #0 - \"Build\"",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-21",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:53.355709360Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "MAIN"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:54.289079390Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Already have image (with digest): gcr.io/cloud-builders/docker",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-22",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:53.366851283Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:54.289079390Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Sending build context to Docker daemon    170kB\r\r",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-23",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:54.397186498Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:55.287890778Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Step 1/8 : FROM node:22-slim",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-24",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:54.481827666Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:55.287890778Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 22-slim: Pulling from library/node",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-25",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:56.872138173Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:57.292118972Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 59e22667830b: Already exists",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-26",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:57.792935111Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:58.287702037Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": dbe5016d5605: Pulling fs layer",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-27",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:57.801455976Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:58.287702037Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 013b1f6b2fa0: Pulling fs layer",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-28",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:57.801467318Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:58.287702037Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": c222336d941a: Pulling fs layer",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-29",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:57.801469050Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:58.287702037Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 372c13f59098: Pulling fs layer",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-30",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:57.801470063Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:58.287702037Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 372c13f59098: Waiting",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-31",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:57.801471183Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:58.287702037Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": dbe5016d5605: Verifying Checksum",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-32",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:58.332879091Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": dbe5016d5605: Download complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-33",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:58.332959551Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": c222336d941a: Download complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-34",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:58.382864478Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": dbe5016d5605: Pull complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-35",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:58.456235403Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 372c13f59098: Verifying Checksum",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-36",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:58.986217896Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 372c13f59098: Download complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-37",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:58.986232377Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 013b1f6b2fa0: Verifying Checksum",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-38",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:59.141592535Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 013b1f6b2fa0: Download complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-39",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:19:59.141607516Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:19:59.288932280Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 013b1f6b2fa0: Pull complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-40",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.640388577Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": c222336d941a: Pull complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-41",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.818624789Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 372c13f59098: Pull complete",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-42",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.947075840Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Digest: sha256:2fa754a9ba4d7adbd2a51d182eaabbe355c82b673624035a38c0d42b08724854",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-43",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.970333320Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Status: Downloaded newer image for node:22-slim",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-44",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.981855473Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> 821b84919992",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-45",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.987713489Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Step 2/8 : WORKDIR /app",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-46",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:01.987729699Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:02.289434250Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> Running in 8b9ce67c1c9f",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-47",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:02.603816616Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Removing intermediate container 8b9ce67c1c9f",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-48",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:02.741688982Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> 4b29c43f4efd",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-49",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:02.741705762Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Step 3/8 : COPY package*.json ./",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-50",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:02.741707186Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> 80fb1b44e31d",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-51",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:02.993827464Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Step 4/8 : RUN npm install",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-52",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:02.995098225Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> Running in 3abb64e04f04",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-53",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:03.064779920Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:03.273978246Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": ",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-54",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.843802394Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": added 157 packages, and audited 158 packages in 10s",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-55",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.843817583Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": ",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-56",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.844153152Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": 20 packages are looking for funding",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-57",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.844162179Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":   run `npm fund` for details",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-58",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.844163292Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": ",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-59",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.845370626Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": found 0 vulnerabilities",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-60",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.845378142Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": \u001b[91mnpm notice",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-61",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.847187602Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": npm notice New major version of npm available! 10.9.2 -> 11.5.2",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-62",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.847196141Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-63",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.847197826Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": npm notice To update run: npm install -g npm@11.5.2",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-64",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.847198528Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": npm notice",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-65",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:13.847199095Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:14.288587331Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": \u001b[0mRemoving intermediate container 3abb64e04f04",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-66",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:17.761178628Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:18.273810358Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> 6d6e2befabc7",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-67",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:17.761207557Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:18.273810358Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Step 5/8 : COPY . .",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-68",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:17.761208685Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:18.273810358Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> 6e94630aaa9c",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-69",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:17.955259697Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:18.273810358Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": Step 6/8 : RUN npm run build",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-70",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:17.955278089Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:18.273810358Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\":  ---> Running in 4e74b94db3f9",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-71",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:17.997126812Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:18.273810358Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": ",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-72",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:18.632291633Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:19.274603221Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": > backend@1.0.0 build",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-73",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:18.632312446Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:19.274603221Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": > tsc",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-74",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:18.632314229Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:19.274603221Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": ",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-75",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:18.632314636Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:19.274603221Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,15): error TS2305: Module '\"@prisma/client\"' has no exported member 'SupplementaryLecture'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-76",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.152096499Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,37): error TS2305: Module '\"@prisma/client\"' has no exported member 'PersonalEvent'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-77",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.153210393Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,52): error TS2305: Module '\"@prisma/client\"' has no exported member 'OfficialLecture'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-78",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.153712795Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,69): error TS2305: Module '\"@prisma/client\"' has no exported member 'LectureException'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-79",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.154179258Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,87): error TS2305: Module '\"@prisma/client\"' has no exported member 'Term'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-80",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.154672287Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,93): error TS2305: Module '\"@prisma/client\"' has no exported member 'PeriodSetting'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-81",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.155160728Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/events.ts(3,108): error TS2305: Module '\"@prisma/client\"' has no exported member 'User'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-82",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.155572324Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/lectureRequests.ts(3,15): error TS2305: Module '\"@prisma/client\"' has no exported member 'OfficialLecture'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-83",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.156082884Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/lectureRequests.ts(24,36): error TS7006: Parameter 'r' implicitly has an 'any' type.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-84",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.156855266Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/lectureRequests.ts(31,45): error TS7006: Parameter 'l' implicitly has an 'any' type.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-85",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.157565471Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/lectureRequests.ts(33,34): error TS7006: Parameter 'r' implicitly has an 'any' type.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-86",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.157962256Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/lectureRequests.ts(36,57): error TS2339: Property 'name' does not exist on type '{}'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-87",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.158699933Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/lectureRequests.ts(37,55): error TS2339: Property 'professor' does not exist on type '{}'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-88",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.158708283Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/officialLectures.ts(2,24): error TS2305: Module '\"@prisma/client\"' has no exported member 'OfficialLecture'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-89",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.159396300Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/officialLectures.ts(2,41): error TS2305: Module '\"@prisma/client\"' has no exported member 'SupplementaryLectureRequest'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-90",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.159402384Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/supplementaryLectures.ts(2,24): error TS2305: Module '\"@prisma/client\"' has no exported member 'SupplementaryLecture'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-91",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.159961143Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/supplementaryLectures.ts(2,46): error TS2305: Module '\"@prisma/client\"' has no exported member 'OfficialLecture'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-92",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.159976721Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/supplementaryLectures.ts(2,63): error TS2305: Module '\"@prisma/client\"' has no exported member 'User'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-93",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.160486574Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": src/routes/supplementaryLectures.ts(2,69): error TS2305: Module '\"@prisma/client\"' has no exported member 'SupplementaryLectureAttendance'.",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-94",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.160550813Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "Step #0 - \"Build\"",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.274037504Z"
+  },
+  {
+    "textPayload": "Step #0 - \"Build\": The command '/bin/sh -c npm run build' returned a non-zero code: 2",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-95",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.400320186Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "Step #0 - \"Build\""
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.782259611Z"
+  },
+  {
+    "textPayload": "Finished Step #0 - \"Build\"",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-96",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.635838519Z",
+    "severity": "INFO",
+    "labels": {
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+      "build_step": "MAIN"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.782259611Z"
+  },
+  {
+    "textPayload": "ERROR",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-97",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379",
+        "project_id": "groovy-bay-465905-m4"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.636050723Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "MAIN",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.782259611Z"
+  },
+  {
+    "textPayload": "ERROR: build step 0 \"gcr.io/cloud-builders/docker\" failed: step exited with non-zero status: 2",
+    "insertId": "f8c51ac0-88f5-408a-93a0-488d1a958379-98",
+    "resource": {
+      "type": "build",
+      "labels": {
+        "project_id": "groovy-bay-465905-m4",
+        "build_trigger_id": "7e3ea578-0b36-40a4-a4fd-52f446745dd5",
+        "build_id": "f8c51ac0-88f5-408a-93a0-488d1a958379"
+      }
+    },
+    "timestamp": "2025-08-01T15:20:22.636085301Z",
+    "severity": "INFO",
+    "labels": {
+      "build_step": "MAIN",
+      "build_tags": "gcp-cloud-build-deploy-cloud-run,gcp-cloud-build-deploy-cloud-run-managed,ebi-yobi-stage,trigger-7e3ea578-0b36-40a4-a4fd-52f446745dd5"
+    },
+    "logName": "projects/groovy-bay-465905-m4/logs/cloudbuild",
+    "receiveTimestamp": "2025-08-01T15:20:22.782259611Z"
+  }
+]
