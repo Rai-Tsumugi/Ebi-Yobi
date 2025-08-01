@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { prisma } from '../lib/db';
+import type { OfficialLecture } from '@prisma/client';
 
 const router = Router();
 
 // GET /api/lecture-requests/ranking - 補講開催希望のランキングを取得
 router.get('/ranking', async (req, res) => {
   try {
-    const ranking = await prisma.supplementaryLectureRequest.groupBy({
+    const ranking: { officialLectureId: number; _count: { officialLectureId: number; } }[] = await prisma.supplementaryLectureRequest.groupBy({
       by: ['officialLectureId'],
       _count: {
         officialLectureId: true,
@@ -21,7 +22,7 @@ router.get('/ranking', async (req, res) => {
 
     // 講義情報を取得してマージ
     const lectureIds = ranking.map(r => r.officialLectureId);
-    const lectures = await prisma.officialLecture.findMany({
+    const lectures: OfficialLecture[] = await prisma.officialLecture.findMany({
       where: {
         id: { in: lectureIds },
       },
@@ -29,10 +30,17 @@ router.get('/ranking', async (req, res) => {
         id: true,
         name: true,
         professor: true,
+        dayOfWeek: true,
+        period: true,
+        termId: true,
+        requests: true,
+        exceptions: true,
+        supplementaryLectures: true,
+        term: true,
       },
     });
 
-    const lectureMap = new Map(lectures.map(l => [l.id, l]));
+    const lectureMap = new Map<number, OfficialLecture>(lectures.map((l: OfficialLecture) => [l.id, l]));
 
     const response = ranking.map(r => ({
       officialLectureId: r.officialLectureId,
