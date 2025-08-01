@@ -36,6 +36,9 @@ import eventRouter from './routes/events';
 import supplementaryLectureRouter from './routes/supplementaryLectures';
 import officialLectureRouter from './routes/officialLectures';
 import personalEventRouter from './routes/personalEvents';
+import lectureRequestRouter from './routes/lectureRequests'; // インポートを追加
+import adminRouter from './routes/admin';
+import { adminOnlyMiddleware } from './middleware/admin';
 
 // ... (他の設定)
 
@@ -46,6 +49,8 @@ app.use('/api/events', iapAuthMiddleware, eventRouter);
 app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
 app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter);
 app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter);
+app.use('/api/lecture-requests', iapAuthMiddleware, lectureRequestRouter); // この行を追加
+app.use('/api/admin', iapAuthMiddleware, adminOnlyMiddleware, adminRouter);
 
 
 

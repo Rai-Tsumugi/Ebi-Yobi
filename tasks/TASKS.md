@@ -64,3 +64,8 @@ This document lists the development tasks to be created as GitHub Issues, based 
     - [ ] **Backend:** 管理者権限ミドルウェアを実装
     - [ ] **Backend:** `POST /api/admin/import-lectures` APIを実装 (サーバーサイドでのCSVパース)
     - [ ] **Frontend:** 管理者ページ (`/admin`) とファイルアップロードUIを実装
+
+- [ ] **Issue #12: Google OAuth による組織内認証 (Google OAuth for Organization)**
+    - [ ] **Backend:** IAPヘッダー検証に加え、許可されたドメインのGoogleアカウントのみを認証するロジックをミドルウェアに実装
+    - [ ] **Frontend:** ログインボタンの実装と、未認証時のリダイレクト処理
+

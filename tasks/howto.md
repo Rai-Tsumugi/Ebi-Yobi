@@ -1,6 +1,6 @@
 # Issue #1: プロジェクト管理システムのセットアップ手順
 
-このドキュメントは、GitHubリポジトリの初期設定を行うための手順書です。
+このドキュメントは、GitHubリポジリの初期設定を行うための手順書です。
 
 ## 1. ブランチの作成と保護設定
 
@@ -1846,7 +1846,7 @@ export const SupplementaryLectureForm = () => {
     register('endTime', { required: '終了時間は必須です' });
   }, [register]);
 
-  const onSubmit = async (data: SupplementaryLectureFormData) => {
+  const onSubmit = async (data: FormData) => {
     try {
       // 日時をISO文字列に変換して送信
       const payload = {
@@ -1955,7 +1955,7 @@ export const SupplementaryLectureForm = () => {
 *   **インポート文の重複:** ファイル内に`import useSWR from 'swr';`が複数回記述されていないか確認し、もしあれば一つだけ残して他を削除してください。
 *   **インポートの順序:** `import useSWR from 'swr';`の行が、ファイルの先頭付近、他の`import`文と一緒に記述されていることを確認してください。
 
-3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)**
+3.  **公式講義の型定義の作成 (`frontend/src/types/officialLecture.ts`)
     *   `frontend/src/types/`内に`officialLecture.ts`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
@@ -1994,10 +1994,130 @@ import { SupplementaryLectureForm } from './components/SupplementaryLectureForm'
 
 私的補講登録フォームで公式講義を選択できるように、公式講義のリストを返すAPIをバックエンドに実装します。
 
+**注意:** このAPIは、Issue #10「補講開催希望とランキング機能」の実装において、ユーザーの希望状況と総希望者数も返すように拡張されています。
+
 1.  `backend/src/routes/`内に`officialLectures.ts`ファイルを作成し、以下の内容を記述します。
 
 ```typescript
 // backend/src/routes/officialLectures.ts
+
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+// GET /api/official-lectures - 全ての公式講義リストを取得
+router.get('/', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const lectures = await prisma.officialLecture.findMany({
+      orderBy: {
+        name: 'asc', // 名前順でソート
+      },
+      include: {
+        requests: true, // 関連するリクエストも取得
+      },
+    });
+
+    const userId = req.user.id; // ログインユーザーのID
+
+    const responseLectures = lectures.map(lecture => {
+      const requestCount = lecture.requests.length;
+      const isRequested = lecture.requests.some(request => request.userId === userId);
+      
+      // 不要なrequestsプロパティを削除して返す
+      const { requests, ...rest } = lecture;
+      return {
+        ...rest,
+        requestCount,
+        isRequested,
+      };
+    });
+
+    res.json(responseLectures);
+  } catch (error) {
+    console.error('Failed to fetch official lectures:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST /api/official-lectures/:id/requests - 補講開催を希望する
+router.post('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に希望済みでないか確認
+    const existingRequest = await prisma.supplementaryLectureRequest.findUnique({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'Already requested' }); // 409 Conflict
+    }
+
+    await prisma.supplementaryLectureRequest.create({
+      data: {
+        userId: req.user.id,
+        officialLectureId,
+      },
+    });
+    res.status(201).send();
+
+  } catch (error) {
+    console.error('Failed to create lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/official-lectures/:id/requests - 補講開催の希望を取り消す
+router.delete('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    await prisma.supplementaryLectureRequest.delete({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+    res.status(204).send();
+
+  } catch (error) {
+    // @ts-ignore
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to delete lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
 
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
@@ -2211,6 +2331,10 @@ router.delete('/:id/attendees', async (req, res) => {
     res.status(204).send(); // 204 No Content
 
   } catch (error) {
+    // レコードが存在しない場合のエラー(P2025)をハンドリング
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
     console.error('Failed to cancel attendance:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -2403,7 +2527,7 @@ export const SupplementaryLectureDetail = () => {
 
 このセクションでは、`issuse.md`の「3.1.1. 個人予定のCRUD機能」に基づき、ユーザーが自身のプライベートな予定をカレンダー上で作成、編集、削除できる機能をモーダルUIで実装する手順を詳述します。
 
-## 3.1.1. バックエンド側の実装 (CRUD API)
+## 3.1.1.1. バックエンド側の実装 (CRUD API)
 
 まず、個人予定を操作するためのAPIエンドポイントをバックエンドに実装します。
 
@@ -2572,7 +2696,7 @@ app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter); // こ�
 *   **設計思想:**
     *   `/api/personal-events` というパスに個人予定関連のAPIを集約し、`iapAuthMiddleware`を適用することで、この機能全体に認証を必須とします。
 
-## 3.1.2. フロントエンド側の実装 (モーダルとフォーム)
+## 3.1.1.2. フロントエンド側の実装 (モーダルとフォーム)
 
 次に、ユーザーが直感的に操作できるモーダルUIをフロントエンドに実装します。
 
@@ -2783,7 +2907,11 @@ export const Calendar = () => {
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        headerToolbar={{ /* ... */ }}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
         events={`${API_BASE_URL}/api/events`}
         eventClick={handleEventClick}
         dateClick={handleDateClick} // dateClickハンドラを追加
@@ -2798,7 +2926,7 @@ export const Calendar = () => {
     *   **`dateClick`と`eventClick`:** FullCalendarが提供する2つの異なるイベントハンドラを使い分け、ユーザーのアクション（日付クリックか、イベントクリックか）に応じて適切な処理（新規作成か、編集か）を起動します。
     *   **`refetchEvents`による表示更新:** API操作が成功した際に、FullCalendarのAPI（`refetchEvents`）を呼び出してイベントデータを再取得します。これにより、ユーザーが行った変更が即座にカレンダーに反映され、UIとデータの一貫性が保たれます。`useCallback`で関数をメモ化し、不要な再レンダリングを防ぎます。
 
-## 3.1.3. 動作確認テスト
+## 3.1.1.3. 動作確認テスト
 
 ここまでの実装が正しく機能するかを、以下のシナリオでテストします。
 
@@ -2831,3 +2959,855 @@ export const Calendar = () => {
 
 ---
 
+
+# Issue #10: 補講開催希望とランキング機能の実装
+
+このセクションでは、`issuse.md`の「3.1.2. 補講開催希望とランキング機能」に基づき、ユーザーが公式講義に対する補講の開催を希望し、その希望者数ランキングを閲覧できる機能を実装する手順を詳述します。
+
+## 3.1.2.1. バックエンド側の実装
+
+### Step 1: APIの設計と実装 (`backend/src/routes/officialLectures.ts`の拡張)
+
+既存の`officialLectures.ts`ルーターに、希望の登録・解除を行うエンドポイントを追加します。
+
+1.  `backend/src/routes/officialLectures.ts`ファイルを開き、以下のエンドポイントを追加します。
+
+```typescript
+// backend/src/routes/officialLectures.ts (既存のコードに追加)
+
+// ... (既存のimport文、router, prismaの定義)
+
+// POST /api/official-lectures/:id/requests - 補講開催を希望する
+router.post('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    // 既に希望済みでないか確認
+    const existingRequest = await prisma.supplementaryLectureRequest.findUnique({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+
+    if (existingRequest) {
+      return res.status(409).json({ error: 'Already requested' }); // 409 Conflict
+    }
+
+    await prisma.supplementaryLectureRequest.create({
+      data: {
+        userId: req.user.id,
+        officialLectureId,
+      },
+    });
+    res.status(201).send();
+
+  } catch (error) {
+    console.error('Failed to create lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// DELETE /api/official-lectures/:id/requests - 補講開催の希望を取り消す
+router.delete('/:id/requests', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const officialLectureId = parseInt(req.params.id, 10);
+  if (isNaN(officialLectureId)) {
+    return res.status(400).json({ error: 'Invalid lecture ID' });
+  }
+
+  try {
+    await prisma.supplementaryLectureRequest.delete({
+      where: {
+        userId_officialLectureId: {
+          userId: req.user.id,
+          officialLectureId,
+        },
+      },
+    });
+    res.status(204).send();
+
+  } catch (error) {
+    // レコードが存在しない場合のエラー(P2025)をハンドリング
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    console.error('Failed to delete lecture request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+```
+*   **思想:**
+    *   **RESTfulな設計:** 特定の講義 (`/api/official-lectures/:id`) に関連するリソース (`/requests`) としてエンドポイントを設計します。
+    *   **冪等性:** `DELETE` 操作は冪等（何回実行しても結果が同じ）になるように設計します。`POST` は成功すればリソースが作成され、既に存在する場合は `409 Conflict` を返すことで、意図しない重複を防ぎます。
+    *   **具体的なエラーハンドリング:** Prismaがレコードを見つけられなかった場合に投げる `P2025` エラーを捕捉し、クライアントに `404 Not Found` を返すことで、より親切なAPIになります。
+
+### Step 2: ランキング集計APIの作成 (`backend/src/routes/lectureRequests.ts`)
+
+ランキングデータを返すための新しいルーターとエンドポイントを作成します。
+
+1.  `backend/src/routes/`内に`lectureRequests.ts`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/lectureRequests.ts
+
+import { Router } from 'express';
+import { prisma } from '../lib/db';
+
+const router = Router();
+
+// GET /api/lecture-requests/ranking - 補講開催希望のランキングを取得
+router.get('/ranking', async (req, res) => {
+  try {
+    const ranking = await prisma.supplementaryLectureRequest.groupBy({
+      by: ['officialLectureId'],
+      _count: {
+        officialLectureId: true,
+      },
+      orderBy: {
+        _count: {
+          officialLectureId: 'desc',
+        },
+      },
+      take: 10, // 上位10件に絞る
+    });
+
+    // 講義情報を取得してマージ
+    const lectureIds = ranking.map(r => r.officialLectureId);
+    const lectures = await prisma.officialLecture.findMany({
+      where: {
+        id: { in: lectureIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        professor: true,
+      },
+    });
+
+    const lectureMap = new Map(lectures.map(l => [l.id, l]));
+
+    const response = ranking.map(r => ({
+      officialLectureId: r.officialLectureId,
+      requestCount: r._count.officialLectureId,
+      lectureName: lectureMap.get(r.officialLectureId)?.name || '',
+      professor: lectureMap.get(r.officialLectureId)?.professor || '',
+    }));
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Failed to fetch lecture request ranking:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **効率的な集計:** Prismaの `groupBy` 機能を使って、データベース側で効率的に希望数を集計します。これにより、全データを取得してからサーバーサイドで集計するよりもパフォーマンスが向上します。
+    *   **N+1問題の回避:** `IN`句を使って、ランキングに必要な講義情報を一度のクエリでまとめて取得します。これにより、ランキングの件数分だけデータベースへの問い合わせが発生する「N+1問題」を避けることができます。
+    *   **データ整形:** バックエンド側でデータをマージし、フロントエンドがそのまま表示できるような親切な形式でレスポンスを返します。
+
+### Step 3: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した新しいルーターを`index.ts`に組み込みます。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+// ... (既存のimport文)
+import lectureRequestRouter from './routes/lectureRequests'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter);
+app.use('/api/lecture-requests', iapAuthMiddleware, lectureRequestRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+
+## 3.1.2.2. フロントエンド側の実装
+
+### Step 1: 型定義の追加 (`frontend/src/types/`)
+
+ランキングAPIのレスポンスと、公式講義の拡張情報（希望状況）の型を定義します。
+
+1.  `frontend/src/types/`に`lectureRequest.ts`ファイルを新規作成します。
+
+```typescript
+// frontend/src/types/lectureRequest.ts
+
+export interface LectureRequestRanking {
+  officialLectureId: number;
+  requestCount: number;
+  lectureName: string;
+  professor: string;
+}
+```
+
+2.  `frontend/src/types/officialLecture.ts`を修正し、ユーザー自身の希望状況と総希望数を追加します。
+
+```typescript
+// frontend/src/types/officialLecture.ts (修正)
+
+export interface OfficialLecture {
+  id: number;
+  name: string;
+  professor: string;
+  dayOfWeek: number;
+  period: number;
+  termId: number;
+  // 以下を追記
+  isRequested?: boolean; // ログインユーザーが希望済みか
+  requestCount?: number; // 全体の希望者数
+}
+```
+
+### Step 2: APIクライアントの拡張 (`frontend/src/lib/api.ts`)
+
+希望登録・解除を行うためのAPIクライアント関数を追加します。
+
+```typescript
+// frontend/src/lib/api.ts (既存のコードに追加)
+
+// ... (既存のimport文、fetcher, updateUserなど)
+
+// 補講開催を希望するAPI
+export const requestLecture = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'POST',
+  });
+};
+
+// 補講開催の希望を取り消すAPI
+export const cancelLectureRequest = async (lectureId: number): Promise<void> => {
+  await fetch(`${API_BASE_URL}/api/official-lectures/${lectureId}/requests`, {
+    method: 'DELETE',
+  });
+};
+```
+
+### Step 3: ランキングコンポーネントの作成 (`frontend/src/components/LectureRequestRanking.tsx`)
+
+ランキングを表示するための専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`LectureRequestRanking.tsx`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/LectureRequestRanking.tsx
+
+import React from 'react';
+import useSWR from 'swr';
+import { fetcher } from '../lib/api';
+import type { LectureRequestRanking as RankingData } from '../types/lectureRequest';
+
+export const LectureRequestRanking = () => {
+  const { data: ranking, error } = useSWR<RankingData[]>('/api/lecture-requests/ranking', fetcher, {
+    refreshInterval: 60000, // 60秒ごとに自動更新
+  });
+
+  if (error) return <div>ランキングの読み込みに失敗しました。</div>;
+  if (!ranking) return <div>ランキングを読み込み中...</div>;
+
+  return (
+    <div className="lecture-request-ranking">
+      <h3>補講希望ランキング</h3>
+      <ol>
+        {ranking.map((item, index) => (
+          <li key={item.officialLectureId}>
+            <span>{index + 1}.</span>
+            <div>
+              <p>{item.lectureName} ({item.professor})</p>
+              <p>{item.requestCount}人が希望中</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **コンポーネント化:** ランキング表示のロジックを専用コンポーネントにカプセル化します。
+    *   **自動更新:** `SWR`の`refreshInterval`オプションを使い、ポーリング（定期的なデータ取得）を簡単に実装します。これにより、他のユーザーの希望がUIに自動的に反映されます。
+
+### Step 4: 希望登録ボタンコンポーネントの作成 (`frontend/src/components/RequestButton.tsx`)
+
+どの講義に対しても再利用可能な、希望登録・解除ボタンを作成します。
+
+1.  `frontend/src/components/`内に`RequestButton.tsx`ファイルを新規作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/RequestButton.tsx
+
+import React from 'react';
+import { useSWRConfig } from 'swr';
+import { requestLecture, cancelLectureRequest } from '../lib/api';
+import type { OfficialLecture } from '../types/officialLecture';
+
+interface RequestButtonProps {
+  lecture: OfficialLecture;
+}
+
+export const RequestButton = ({ lecture }: RequestButtonProps) => {
+  const { mutate } = useSWRConfig();
+
+  const handleRequest = async () => {
+    // 楽観的UI更新
+    mutate(
+      '/api/official-lectures', // 更新対象のSWRキー
+      (currentData: OfficialLecture[] | undefined) => {
+        // キャッシュデータをイミュータブルに更新
+        return currentData?.map(l => 
+          l.id === lecture.id ? { ...l, isRequested: true, requestCount: (l.requestCount || 0) + 1 } : l
+        );
+      },
+      false // APIへの再検証は行わない
+    );
+    // APIリクエスト
+    await requestLecture(lecture.id);
+    // 完了後、最新のデータでキャッシュを再検証
+    mutate('/api/official-lectures');
+  };
+
+  const handleCancel = async () => {
+    // 楽観的UI更新
+    mutate(
+      '/api/official-lectures',
+      (currentData: OfficialLecture[] | undefined) => {
+        return currentData?.map(l => 
+          l.id === lecture.id ? { ...l, isRequested: false, requestCount: Math.max(0, (l.requestCount || 1) - 1) } : l
+        );
+      },
+      false
+    );
+    // APIリクエスト
+    await cancelLectureRequest(lecture.id);
+    // 完了後、最新のデータでキャッシュを再検証
+    mutate('/api/official-lectures');
+  };
+
+  return (
+    <div>
+      {lecture.isRequested ? (
+        <button onClick={handleCancel}>希望を取り消す</button>
+      ) : (
+        <button onClick={handleRequest}>補講を希望する</button>
+      )}
+      <span>現在の希望者数: {lecture.requestCount || 0}人</span>
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **楽観的UI更新:** `SWR`の`mutate`関数を最大限に活用します。APIのレスポンスを待たずにUIを即座に変更することで、ユーザーにストレスを感じさせない、滑らかな操作感を提供します。
+    *   **再利用性:** ボタンのロジックをコンポーネント化することで、将来的に公式講義一覧ページなど、別の場所でも同じボタンを簡単に再利用できます。
+
+### Step 5: 既存コンポーネントへの統合
+
+作成したコンポーネントを、既存のページやコンポーネントに組み込みます。
+
+1.  **`App.tsx`のレイアウト変更:**
+    *   `App.tsx`を開き、ランキングコンポーネントを配置するためのサイドパネル領域を追加します。
+
+2.  **公式講義一覧ページ/詳細モーダルの作成:**
+    *   `issuse.md`の仕様に基づき、公式講義の一覧ページまたは詳細モーダルを作成します。
+    *   `GET /api/official-lectures`を呼び出して講義リストを取得し、各講義に対して`RequestButton`コンポーネントを表示します。
+
+## 3.1.2.3. 動作確認テスト
+
+### テストの準備
+
+1.  **テストデータの投入:**
+    *   `psql`やDBeaverなどのDBクライアントで、`supplementary_lecture_requests`テーブルにいくつかの希望データを手動で`INSERT`しておきます。
+    ```sql
+    -- ユーザーIDと講義IDは、ご自身の環境に合わせて調整してください
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-1', 1);
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-2', 1);
+    INSERT INTO "SupplementaryLectureRequest" ("userId", "officialLectureId") VALUES ('your-user-id-1', 2);
+    ```
+
+2.  **開発サーバーの起動:**
+    *   `backend`と`frontend`の両方の開発サーバーを起動します。
+    *   `backend/src/middleware/auth.ts`で、**一時的な認証バイパスが有効になっている**ことを確認してください。
+
+### テストの実施方法
+
+1.  **ランキング表示の確認:**
+    *   ブラウザでアプリケーションを開き、ランキングコンポーネントが表示されていることを確認します。
+    *   `psql`で投入したテストデータ通りのランキング（例: 微分積分学: 2人、統計学: 1人）が表示されていることを確認します。
+
+2.  **希望登録/解除の確認:**
+    *   公式講義の詳細画面や一覧画面を開きます。
+    *   「補講を希望する」ボタンをクリックします。
+    *   **想定される結果:**
+        *   クリック後、即座にボタンが「希望を取り消す」に変わり、希望者数が1人増えること（楽観的UI更新）。
+        *   ブラウザの開発者ツールで、`POST /api/official-lectures/:id/requests`へのAPIリクエストが成功していることを確認します。
+        *   ページをリロードしても、「希望を取り消す」の状態が維持されていることを確認します。
+    *   「希望を取り消す」ボタンをクリックし、逆の動作（ボタンが「希望する」に変わり、希望者数が1人減る）を確認します。
+
+3.  **ランキングの自動更新確認:**
+    *   ランキングを表示したまま、別のブラウザやAPIクライアントツールを使って、特定の講義への希望を登録・解除します。
+    *   **想定される結果:**
+        *   最大60秒（`refreshInterval`で設定した時間）待つと、ランキング表示が自動的に更新され、最新の希望者数が反映されることを確認します。
+
+# Issue #11: 管理者向けCSVインポート機能
+
+このセクションでは、`issuse.md`の「3.1.3. 管理者向けCSV一括インポート機能」に基づき、管理者ユーザーが大学公式の講義データを一括で登録・更新する機能の実装手順を詳述します。
+
+## 3.1.3.1. バックエンド側の実装
+
+管理者専用のAPIエンドポイントと、そのエンドポイントを保護するための権限チェックミドルウェアを実装します。
+
+### Step 1: 依存関係のインストール
+
+CSVファイルのアップロードと解析のために、`multer`と`papaparse`をインストールします。
+
+```bash
+# backend ディレクトリで実行
+npm install multer papaparse
+# 型定義もインストール
+npm install -D @types/multer @types/papaparse
+```
+*   **思想:**
+    *   `multer`: Node.jsで`multipart/form-data`形式のリクエスト（ファイルアップロードなど）を扱うための標準的なミドルウェアです。
+    *   `papaparse`: 高機能なCSVパーサーです。ストリーミング処理に対応しているため、サーバーのメモリを圧迫することなく、大規模なCSVファイルも効率的に処理できます。
+
+### Step 2: 管理者権限ミドルウェアの作成 (`backend/src/middleware/admin.ts`)
+
+APIリクエストを処理する前に、ログインユーザーが管理者（`ADMIN`）ロールを持っているかを確認するミドルウェアを作成します。
+
+1.  `backend/src/middleware/`内に`admin.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/middleware/admin.ts
+
+import { Request, Response, NextFunction } from 'express';
+
+export const adminOnlyMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // iapAuthMiddlewareによってreq.userがセットされていることが前提
+  if (req.user && req.user.role === 'ADMIN') {
+    next(); // ユーザーがADMINなら次の処理へ
+  } else {
+    // ADMINでなければアクセスを拒否
+    res.status(403).json({ error: 'Forbidden: Administrator access required.' });
+  }
+};
+```
+*   **思想:**
+    *   **権限分離:** 認証（`iapAuthMiddleware`）と認可（`adminOnlyMiddleware`）を異なるミドルウェアに分離することで、それぞれの責務を明確にします。これにより、将来的に「編集者」のような新しいロールが追加された場合でも、柔軟に認可ロジックを拡張できます。
+
+### Step 3: 管理者用ルーターの作成 (`backend/src/routes/admin.ts`)
+
+CSVインポートAPIのエンドポイントを定義するルーターを作成します。
+
+1.  `backend/src/routes/`内に`admin.ts`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// backend/src/routes/admin.ts
+
+import { Router } from 'express';
+import multer from 'multer';
+import Papa from 'papaparse';
+import { prisma } from '../lib/db';
+import { Readable } from 'stream';
+
+const router = Router();
+
+// ファイルをメモリ上にバッファとして保存するmulter設定
+const upload = multer({ storage: multer.memoryStorage() });
+
+// POST /api/admin/import-lectures - CSVファイルで公式講義を一括登録
+router.post('/import-lectures', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
+  const fileBuffer = req.file.buffer;
+  const lectures: any[] = [];
+
+  try {
+    // BufferをStreamに変換してPapaparseでストリーミング処理
+    const stream = Readable.from(fileBuffer);
+    
+    await new Promise<void>((resolve, reject) => {
+      Papa.parse(stream, {
+        header: true, // 1行目をヘッダーとして扱う
+        skipEmptyLines: true,
+        step: (result) => {
+          // 各行のデータをバリデーションし、配列に追加
+          const row = result.data as any;
+          if (row.name && row.professor && row.dayOfWeek && row.period && row.termId) {
+            lectures.push({
+              name: row.name,
+              professor: row.professor,
+              dayOfWeek: parseInt(row.dayOfWeek, 10),
+              period: parseInt(row.period, 10),
+              termId: parseInt(row.termId, 10),
+            });
+          } else {
+            // バリデーションエラーがある行はスキップまたはエラー処理
+            console.warn('Skipping invalid row:', result.data);
+          }
+        },
+        complete: () => {
+          resolve();
+        },
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+
+    // トランザクション内で洗い替え処理を実行
+    await prisma.$transaction(async (tx) => {
+      // 1. 既存の公式講義データを全て削除
+      await tx.officialLecture.deleteMany({});
+      
+      // 2. CSVからパースした新しいデータを一括登録
+      await tx.officialLecture.createMany({
+        data: lectures,
+      });
+    });
+
+    res.status(200).json({ message: `Successfully imported ${lectures.length} lectures.` });
+
+  } catch (error) {
+    console.error('CSV import failed:', error);
+    res.status(500).json({ error: 'Failed to import CSV file.', details: (error as Error).message });
+  }
+});
+
+export default router;
+```
+*   **思想:**
+    *   **洗い替え方式:** 既存のデータを全て削除してから新しいデータを登録する「洗い替え」方式を採用することで、ロジックを単純化し、データの整合性を保ちやすくします。
+    *   **トランザクション:** データの削除と登録という一連の操作を`prisma.$transaction`でラップすることで、処理の途中でエラーが発生した場合に全ての変更がロールバックされ、データベースが中途半端な状態になるのを防ぎます。
+    *   **サーバーサイドでのパース:** クライアント側ではなくサーバー側でCSVをパースすることで、クライアントの実装を簡潔に保ち、サーバー側で一貫したバリデーションルールを適用できます。
+
+### Step 4: ルーティングの統合 (`backend/src/index.ts`)
+
+作成した管理者用ルーターを`index.ts`に組み込みます。この際、**認証ミドルウェアと管理者権限ミドルウェアの両方を適用**します。
+
+```typescript
+// backend/src/index.ts の `// --- ルーティングの設定 ---` セクションを修正
+
+import { iapAuthMiddleware } from './middleware/auth';
+import { adminOnlyMiddleware } from './middleware/admin'; // インポートを追加
+import userRouter from './routes/user';
+import eventRouter from './routes/events';
+import supplementaryLectureRouter from './routes/supplementaryLectures';
+import officialLectureRouter from './routes/officialLectures';
+import personalEventRouter from './routes/personalEvents';
+import lectureRequestRouter from './routes/lectureRequests';
+import adminRouter from './routes/admin'; // インポートを追加
+
+// ... (他の設定)
+
+// --- ルーティングの設定 ---
+
+app.use('/api/users', iapAuthMiddleware, userRouter);
+app.use('/api/events', iapAuthMiddleware, eventRouter);
+app.use('/api/supplementary-lectures', iapAuthMiddleware, supplementaryLectureRouter);
+app.use('/api/official-lectures', iapAuthMiddleware, officialLectureRouter);
+app.use('/api/personal-events', iapAuthMiddleware, personalEventRouter);
+app.use('/api/lecture-requests', iapAuthMiddleware, lectureRequestRouter);
+// 管理者用ルート: IAP認証と管理者ロールチェックの両方を適用
+app.use('/api/admin', iapAuthMiddleware, adminOnlyMiddleware, adminRouter); // この行を追加
+
+// ... (サーバー起動)
+```
+*   **思想:**
+    *   **ミドルウェアチェーン:** Expressではミドルウェアを連続して適用できます。`/api/admin`へのリクエストは、まず`iapAuthMiddleware`で「学内ユーザーか」を検証し、次に`adminOnlyMiddleware`で「管理者か」を検証し、両方をパスした場合にのみ`adminRouter`の処理が実行されます。これにより、段階的で強固なアクセス制御を実現します。
+
+## 3.1.3.2. フロントエンド側の実装
+
+管理者ユーザーにのみ表示されるCSVインポートページを実装します。
+
+### Step 1: 管理者ページの作成 (`frontend/src/components/AdminPage.tsx`)
+
+ファイルアップロードUIを持つ管理者専用コンポーネントを作成します。
+
+1.  `frontend/src/components/`内に`AdminPage.tsx`ファイルを作成し、以下の内容を記述します。
+
+```typescript
+// frontend/src/components/AdminPage.tsx
+
+import React, { useState } from 'react';
+import { useUser } from '../hooks/useUser';
+
+export const AdminPage = () => {
+  const { user } = useUser();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string>('');
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFile(event.target.files[0]);
+      setUploadMessage('');
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadMessage('ファイルを選択してください。');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadMessage('アップロード中...');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      // IAP認証情報はブラウザが自動で付与するため、特別なヘッダーは不要
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/import-lectures`, {
+        method: 'POST',
+        // 'Content-Type'はブラウザが自動で設定するため、手動で設定しない
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'アップロードに失敗しました。');
+      }
+
+      setUploadMessage(data.message);
+    } catch (error) {
+      setUploadMessage(`エラー: ${(error as Error).message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // 管理者でない場合は権限がない旨を表示
+  if (user?.role !== 'ADMIN') {
+    return (
+      <div>
+        <h2>管理者専用ページ</h2>
+        <p>このページを閲覧する権限がありません。</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-page">
+      <h2>管理者向けCSV一括インポート</h2>
+      <p>大学公式の講義データをCSVファイルで一括登録します。</p>
+      <p><strong>注意:</strong> この操作は既存の全公式講義データを上書きします。</p>
+      
+      <div className="csv-format-info">
+        <h4>CSVフォーマット</h4>
+        <p>CSVファイルは以下のヘッダーを持つ必要があります:</p>
+        <code>name, professor, dayOfWeek, period, termId</code>
+      </div>
+
+      <div className="upload-form">
+        <input type="file" accept=".csv" onChange={handleFileChange} disabled={isUploading} />
+        <button onClick={handleUpload} disabled={isUploading || !selectedFile}>
+          {isUploading ? '処理中...' : 'インポート実行'}
+        </button>
+      </div>
+
+      {uploadMessage && <div className="upload-feedback">{uploadMessage}</div>}
+    </div>
+  );
+};
+```
+*   **思想:**
+    *   **クライアントサイドでの権限チェック:** `useUser`フックから取得したユーザーロールを基に、コンポーネントの表示内容を切り替えます。これにより、APIへの不要なリクエストを防ぎ、ユーザーに即座にフィードバックを提供できます。
+    *   **`FormData`の利用:** ファイルを送信する際は、`FormData`オブジェクトを利用するのが標準的な方法です。`Content-Type`ヘッダーはブラウザが自動的に`multipart/form-data`として適切に設定してくれるため、手動で指定する必要はありません。
+
+### Step 2: ルーティングの追加 (`frontend/src/App.tsx`)
+
+管理者ページへのルートを`App.tsx`に追加します。
+
+```typescript
+// frontend/src/App.tsx (既存のRoutesに追加)
+
+import { AdminPage } from './components/AdminPage'; // インポートを追加
+
+// ... (既存のRoutes)
+
+          <Routes>
+            {/* ...既存のルート... */}
+            <Route path="/official-lectures" element={<OfficialLectureList />} />
+            <Route path="/admin" element={<AdminPage />} /> {/* この行を追加 */}
+          </Routes>
+
+// ... (既存のコード)
+```
+
+## 3.1.3.3. 動作確認テスト
+
+管理者向け機能が正しく動作し、権限のないユーザーからのアクセスを適切にブロックできるかを確認します。
+
+### テストの準備
+
+1.  **管理者ユーザーの作成:**
+    *   `psql`やDBeaverなどのデータベースクライアントでローカルのDBに接続します。
+    *   テストに使用するユーザー（例: `test-user@example.com`）の`role`を`ADMIN`に手動で更新します。
+    ```sql
+    UPDATE "User" SET role = 'ADMIN' WHERE university_email = 'test-user@example.com';
+    ```
+
+2.  **テスト用CSVファイルの準備:**
+    *   以下の内容で`lectures.csv`というファイルを作成します。
+    ```csv
+    name,professor,dayOfWeek,period,termId
+    量子力学,シュレディンガー,3,1,1
+    相対性理論,アインシュタイン,5,3,1
+    ```
+
+### テストの実施
+
+1.  **管理者ユーザーとしてログイン:**
+    *   `backend/src/middleware/auth.ts`で認証バイパスが有効になっていることを確認し、管理者ユーザー（`test-user@example.com`）としてアプリケーションにアクセスします。
+
+2.  **管理者ページへのアクセス:**
+    *   ブラウザで直接 `http://localhost:5173/admin` にアクセスします。
+
+3.  **CSVのインポート:**
+    *   「ファイルを選択」ボタンで、準備した`lectures.csv`を選択します。
+    *   「インポート実行」ボタンをクリックします。
+
+### 想定される結果
+
+-   **管理者ユーザーの場合:**
+    -   `/admin`ページに「管理者向けCSV一括インポート」のUIが表示される。
+    -   CSVファイルをアップロード後、「Successfully imported 2 lectures.」のような成功メッセージが表示される。
+    -   データベースの`OfficialLecture`テーブルの内容が、`lectures.csv`の内容で上書きされていることを確認する。
+
+-   **一般ユーザーの場合:**
+    -   `role`が`USER`のユーザーでログインし、`/admin`ページにアクセスする。
+    -   「このページを閲覧する権限がありません。」というメッセージが表示され、インポート機能が利用できないことを確認する。
+    -   APIクライアントツールで直接`/api/admin/import-lectures`にリクエストを送信した場合、ステータスコード`403 Forbidden`が返されることを確認する。
+
+# Issue #12: Google OAuth による組織内認証の詳細手順
+
+このドキュメントは、`issuse.md`の「3.2. Google OAuth による組織内認証」に基づき、より詳細な実装手順、設計思想、テスト方法を定義するものです。
+
+## 3.2.1. 設計思想
+
+- **セキュリティの強化**: Google IAPによる認証は、リクエストがGoogleアカウントによって認証されていることを保証しますが、「どの」Googleアカウントであるかまでは問いません。本機能は、許可された組織（大学など）のドメインを持つアカウントのみにアクセスを限定することで、セキュリティを一層強化することを目的とします。
+- **責務の分離**: 認証（Authentication）と認可（Authorization）の責務を明確に分離します。
+    - **認証 (IAP)**: リクエストが正当なGoogleユーザーからのものであることを確認する。
+    - **認可 (本実装)**: 認証されたユーザーが、我々のサービスを利用する権限（＝許可された組織のメンバーであること）を持っているかを確認する。
+- **ユーザー体験の向上**: ユーザーがアクセスを拒否された際に、なぜ拒否されたのかを明確にフィードバックすることで、混乱を防ぎます。
+
+## 3.2.2. バックエンド側の実装
+
+### Step 1: 認証ミドルウェアの強化 (`backend/src/middleware/auth.ts`)
+
+既存の`iapAuthMiddleware`に、組織ドメインを検証するロジックを追加します。
+
+1.  **許可ドメインのリストを定義**: `ALLOWED_DOMAINS`という定数を定義します。将来的には、このリストを環境変数 (`process.env.ALLOWED_DOMAINS`) から読み込むように変更することが望ましいです。
+
+2.  **ドメインの抽出と検証**: IAPヘッダーから取得したメールアドレスを`@`で分割し、ドメイン部分を取得します。取得したドメインが`ALLOWED_DOMAINS`リストに含まれているかを確認します。
+
+3.  **アクセス拒否**: ドメインがリストに含まれていない場合、`403 Forbidden`ステータスコードと、アクセスが拒否された理由を示すJSONメッセージを返却して処理を中断します。
+
+```typescript
+// backend/src/middleware/auth.ts (修正箇所)
+
+// ... (既存のコード)
+
+export const iapAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  // ... (既存のIAPヘッダー取得とメールアドレス抽出ロジック)
+
+  const email = (emailHeader as string).split(':').pop();
+  if (!email) {
+    return res.status(400).send('Bad Request: Invalid IAP header format');
+  }
+
+  // --- ここから追加・修正するロジック ---
+  // 許可するドメインのリストを定義（環境変数から読み込むのが理想的）
+  const ALLOWED_DOMAINS = (process.env.ALLOWED_DOMAINS || 'your-university.ac.jp').split(',');
+
+  const domain = email.split('@')[1]; // メールアドレスからドメインを抽出
+  if (!ALLOWED_DOMAINS.includes(domain)) {
+    console.warn(`Unauthorized access attempt from domain: ${domain}`);
+    return res.status(403).json({ error: 'Forbidden: Access from this organization is not allowed.' });
+  }
+  // --- ここまで追加・修正するロジック ---
+
+  try {
+    // ... (既存のユーザー検索・作成ロジック)
+  } catch (error) {
+    // ...
+  }
+};
+```
+
+## 3.2.3. フロントエンド側の実装
+
+### Step 1: ログインボタンの実装
+
+ユーザーが能動的にログインプロセスを開始できるように、ログインボタンを設置します。これは、特にユーザーが未認証の状態で最初に訪れるページ（例: トップページ）で有効です。
+
+- **UIの実装**: 未認証状態のユーザーに対して、「学内アカウントでログイン」ボタンを表示します。
+- **動作**: このボタンがクリックされたら、保護されたAPIエンドポイント（例: `/api/users/me`）へのリクエストをトリガーします。IAPが有効な環境では、このリクエストが自動的にGoogleのログインページへのリダイレクトを引き起こします。
+
+### Step 2: エラーハンドリングの強化
+
+バックエンドから`403 Forbidden`が返された場合に、それをユーザーに分かりやすく伝えます。
+
+- **`useUser`フックの修正 (`frontend/src/hooks/useUser.ts`):**
+  - `SWR`のエラーオブジェクト (`error`) をハンドリングし、ステータスコードが`403`の場合に特別なエラー状態をコンポーネントに渡すようにします。
+
+- **UIの修正:**
+  - `useUser`フックから受け取ったエラー状態を基に、「あなたのアカウントのドメインではこのサービスを利用できません。」といった具体的なエラーメッセージを表示します。
+
+## 3.2.4. テスト
+
+### 3.2.4.1. テストシナリオ
+
+以下の2つのシナリオでテストを実施します。
+
+1.  **許可されたドメインを持つユーザー**
+2.  **許可されていないドメインを持つユーザー**
+
+### 3.2.4.2. テストの準備
+
+- **バックエンド**: `backend/.env`ファイルに、テスト用の許可ドメインを設定します。
+  ```
+  # backend/.env
+  ALLOWED_DOMAINS=your-university.ac.jp,example.com
+  ```
+- **フロントエンド**: 開発サーバーを起動します。
+
+### 4.3. テストの実施と想定される結果
+
+APIクライアントツール（Postman, Insomniaなど）またはブラウザの開発者ツールを用いて、バックエンドAPIへのリクエストをシミュレートします。
+
+- **シナリオ1: 許可されたドメイン**
+  - **リクエストヘッダー**: `X-Goog-Authenticated-User-Email: accounts.google.com:user@your-university.ac.jp`
+  - **送信先**: `GET http://localhost:3001/api/users/me`
+  - **想定される結果**: ステータスコード`200 OK`が返却され、ユーザー情報がJSON形式で返される。
+
+- **シナリオ2: 許可されていないドメイン**
+  - **リクエストヘッダー**: `X-Goog-Authenticated-User-Email: accounts.google.com:user@other-domain.com`
+  - **送信先**: `GET http://localhost:3001/api/users/me`
+  - **想定される結果**: ステータスコード`403 Forbidden`が返却され、レスポンスボディに`{ "error": "Forbidden: Access from this organization is not allowed." }`のようなJSONが含まれる。
